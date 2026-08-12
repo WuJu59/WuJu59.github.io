@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理台 · WuJu59Web</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✿</text></svg>">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="themes/retro/theme.css">
+</head>
+<body id="top">
+  <header class="site-header">
+    <h1 class="site-title">管理台</h1>
+    <p class="site-subtitle">~ 管理提问箱与留言板 · <span id="version">v0.4</span> ~</p>
+    <nav class="nav">
+      <a href="home.html">主页</a>
+      <a href="shuoshuo.html">说说</a>
+      <a href="album.html">相册</a>
+      <a href="ask.html">提问箱</a>
+      <a href="guestbook.html">留言板</a>
+      <a href="admin.html" class="active">管理</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <section id="admin-login" class="card" hidden>
+      <p class="card-title">管理员登录</p>
+      <form id="login-form">
+        <label class="field">
+          <span>密码</span>
+          <input id="admin-password" type="password" placeholder="请输入管理密码">
+        </label>
+        <button class="btn" type="submit">登录</button>
+      </form>
+      <p class="t-dim">默认密码 <span class="mono">wuju59</span>，请到 <span class="mono">js/config.js</span> 里修改。</p>
+    </section>
+
+    <div id="admin-panel" hidden>
+      <div class="card">
+        <p class="card-title">管理概览</p>
+        <p>提问箱 <b id="stat-asks">0</b> 条 · 留言板 <b id="stat-entries">0</b> 条</p>
+        <p class="t-dim">数据保存在当前浏览器的 localStorage 里，与管理页共用同一份数据。</p>
+        <div class="actions">
+          <button class="btn" type="button" id="logout-btn">退出登录</button>
+        </div>
+      </div>
+
+      <section>
+        <h2>提问箱管理</h2>
+        <div id="admin-asks"></div>
+      </section>
+
+      <section>
+        <h2>留言板管理</h2>
+        <div class="actions">
+          <button class="btn" type="button" id="export-entries">导出备份</button>
+          <button class="btn danger-btn" type="button" id="clear-entries">清空全部留言</button>
+        </div>
+        <div id="admin-entries"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2026 <span id="footer-name">五九</span> · WuJu59Web ✿</p>
+    <p>made with ♥ &amp; a bit of retro</p>
+    <p>现在时间：<span id="clock">--:--:--</span></p>
+    <div class="webring">
+      <a href="home.html">⌂ 回主页</a>
+      <a href="index.html">⌂ 回到入口</a>
+      <a href="guestbook.html">✎ 留言板</a>
+    </div>
+  </footer>
+
+  <div id="toast"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="themes/retro/theme.js"></script>
+</body>
+</html>

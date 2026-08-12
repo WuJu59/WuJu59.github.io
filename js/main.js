@@ -23,10 +23,9 @@ function renderShuoshuo(container, pairs) {
     const isLiked = liked.includes(i);
     return `
       <article class="shuoshuo-item">
-        <div class="shuoshuo-avatar">✿</div>
         <div class="shuoshuo-body">
           <div class="shuoshuo-meta">
-            <span>${SITE.name}</span>
+            <span>@${SITE.name}</span>
             <span class="mood">${s.mood}</span>
             <time>${s.date}</time>
           </div>
@@ -70,6 +69,16 @@ document.addEventListener("DOMContentLoaded", () => {
   fill("#status-text", SITE.status);
   fill("#since", SITE.since);
   fill("#version", SITE.version);
+
+  /* 页脚加入管理入口 */
+  const webring = $(".webring");
+  if (webring && !$(".admin-link", webring)) {
+    const a = document.createElement("a");
+    a.className = "admin-link";
+    a.href = "admin.html";
+    a.textContent = "⚙ 管理";
+    webring.appendChild(a);
+  }
 
   /* 时钟 */
   const clock = $("#clock");
