@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>留言板 · 千禧小站</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✿</text></svg>">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="themes/y2k/theme.css">
+</head>
+<body id="top">
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track">
+      <span>✦ 留言板 ✦ Guestbook !! ✦ 路过请留个脚印 ✦ 欢迎聊天 ✦</span>
+      <span>✦ 留言板 ✦ Guestbook !! ✦ 路过请留个脚印 ✦ 欢迎聊天 ✦</span>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <h1 class="site-title">Guestbook!! 留言板</h1>
+    <p class="subtitle">~ 路过请留个脚印 ✿ ~</p>
+    <nav class="nav">
+      <a href="index.html">★ 首页</a>
+      <a href="about.html">★ 关于我</a>
+      <a href="journal.html">★ 我的日记</a>
+      <a href="guestbook.html" class="active">★ 留言板</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <div class="rainbow"></div>
+
+    <section class="card">
+      <p>随便写点什么：建议、感想，或者只是打个招呼～</p>
+      <p class="t-dim">当前留言存在你的浏览器本地（localStorage），联网同步功能在路线图里。</p>
+    </section>
+
+    <form id="guest-form" class="card">
+      <label class="field">
+        <span>昵称</span>
+        <input id="nick" type="text" maxlength="20" placeholder="怎么称呼你？">
+      </label>
+      <label class="field">
+        <span>留言</span>
+        <textarea id="message" rows="4" maxlength="500" placeholder="写点什么吧……" required></textarea>
+      </label>
+      <div style="text-align:center">
+        <button class="btn" type="submit">✿ 留下脚印</button>
+        <button class="btn" type="button" id="export-btn">备份留言</button>
+      </div>
+    </form>
+
+    <section>
+      <h2>大家的脚印</h2>
+      <div id="entries"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Best viewed in 800×600 ✿ 本站始建于 <span id="since">2026.08.12</span></p>
+    <p>现在时间：<span id="clock">--:--:--</span></p>
+    <div class="webring">
+      <a href="guestbook.html">✎ 给我留言</a>
+      <a href="mailto:hello@example.com">✉ 发邮件给我</a>
+      <a href="#top">↑ 回到顶部</a>
+    </div>
+    <p>© 2026 <span id="footer-name">你的名字</span> · made with ♥ &amp; lots of sparkles ✦</p>
+  </footer>
+
+  <div id="toast"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/guestbook.js"></script>
+  <script src="themes/y2k/theme.js"></script>
+</body>
+</html>
