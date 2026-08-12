@@ -3,37 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>留言板 · 千禧小站</title>
+  <title>留言板 · WuJu59Web</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✿</text></svg>">
   <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="themes/y2k/theme.css">
+  <link rel="stylesheet" href="themes/retro/theme.css">
 </head>
 <body id="top">
-  <div class="marquee" aria-hidden="true">
-    <div class="marquee-track">
-      <span>✦ 留言板 ✦ Guestbook !! ✦ 路过请留个脚印 ✦ 欢迎聊天 ✦</span>
-      <span>✦ 留言板 ✦ Guestbook !! ✦ 路过请留个脚印 ✦ 欢迎聊天 ✦</span>
-    </div>
-  </div>
-
   <header class="site-header">
-    <h1 class="site-title">Guestbook!! 留言板</h1>
-    <p class="subtitle">~ 路过请留个脚印 ✿ ~</p>
+    <h1 class="site-title">留言板</h1>
+    <p class="site-subtitle">~ 说句话，或者画个涂鸦 ~</p>
     <nav class="nav">
-      <a href="index.html">★ 首页</a>
-      <a href="about.html">★ 关于我</a>
-      <a href="journal.html">★ 我的日记</a>
-      <a href="guestbook.html" class="active">★ 留言板</a>
+      <a href="home.html">主页</a>
+      <a href="shuoshuo.html">说说</a>
+      <a href="album.html">相册</a>
+      <a href="ask.html">提问箱</a>
+      <a href="guestbook.html" class="active">留言板</a>
     </nav>
   </header>
 
   <main class="wrap">
-    <div class="rainbow"></div>
-
-    <section class="card">
+    <div class="card">
       <p>随便写点什么：建议、感想，或者只是打个招呼～</p>
       <p class="t-dim">当前留言存在你的浏览器本地（localStorage），联网同步功能在路线图里。</p>
-    </section>
+    </div>
 
     <form id="guest-form" class="card">
       <label class="field">
@@ -42,8 +34,24 @@
       </label>
       <label class="field">
         <span>留言</span>
-        <textarea id="message" rows="4" maxlength="500" placeholder="写点什么吧……" required></textarea>
+        <textarea id="message" rows="3" maxlength="500" placeholder="写点什么吧……" required></textarea>
       </label>
+
+      <div class="field">
+        <span>涂鸦（可选）</span>
+        <div class="swatches">
+          <button type="button" class="swatch active" data-color="#33302a" title="墨色" style="background:#33302a"></button>
+          <button type="button" class="swatch" data-color="#c0392b" title="红色" style="background:#c0392b"></button>
+          <button type="button" class="swatch" data-color="#2980b9" title="蓝色" style="background:#2980b9"></button>
+          <button type="button" class="swatch" data-color="#27ae60" title="绿色" style="background:#27ae60"></button>
+          <button type="button" class="swatch" data-color="#8e44ad" title="紫色" style="background:#8e44ad"></button>
+          <button type="button" class="swatch" data-color="#c29a3d" title="金色" style="background:#c29a3d"></button>
+        </div>
+        <canvas id="doodle" aria-label="涂鸦画板"></canvas>
+        <p class="doodle-note">在框里按住鼠标画画，会跟着留言一起保存。</p>
+        <button class="btn" type="button" id="doodle-clear">清空涂鸦</button>
+      </div>
+
       <div style="text-align:center">
         <button class="btn" type="submit">✿ 留下脚印</button>
         <button class="btn" type="button" id="export-btn">备份留言</button>
@@ -57,15 +65,14 @@
   </main>
 
   <footer>
-    <p>Best viewed in 800×600 ✿ 本站始建于 <span id="since">2026.08.12</span></p>
+    <p>© 2026 <span id="footer-name">你的名字</span> · WuJu59Web ✿</p>
+    <p>made with ♥ &amp; a bit of retro</p>
     <p>现在时间：<span id="clock">--:--:--</span></p>
     <div class="webring">
+      <a href="index.html">⌂ 回到入口</a>
       <a href="guestbook.html">✎ 给我留言</a>
-      <a href="mailto:hello@example.com">✉ 发邮件给我</a>
-      <a href="#top">↑ 回到顶部</a>
+      <a href="mailto:hello@example.com">✉ 发邮件</a>
     </div>
-    <p>© 2026 <span id="footer-name">你的名字</span> · WuJu59Web ✿</p>
-    <p>made with ♥ &amp; lots of sparkles ✦</p>
   </footer>
 
   <div id="toast"></div>
@@ -73,6 +80,6 @@
   <script src="js/config.js"></script>
   <script src="js/main.js"></script>
   <script src="js/guestbook.js"></script>
-  <script src="themes/y2k/theme.js"></script>
+  <script src="themes/retro/theme.js"></script>
 </body>
 </html>

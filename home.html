@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WuJu59Web · 主页</title>
+  <meta name="description" content="WuJu59Web 主站：关于我、说说、相册、提问箱、留言板。">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✿</text></svg>">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="themes/retro/theme.css">
+</head>
+<body id="top">
+  <header class="site-header">
+    <h1 class="site-title">WuJu59Web</h1>
+    <p class="site-subtitle">~ 欢迎来到 <span id="whoami-name">你的名字</span> 的小站 · <span id="version">v0.3</span> ~</p>
+    <nav class="nav">
+      <a href="home.html" class="active">主页</a>
+      <a href="shuoshuo.html">说说</a>
+      <a href="album.html">相册</a>
+      <a href="ask.html">提问箱</a>
+      <a href="guestbook.html">留言板</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <section class="card profile">
+      <div class="avatar">✿</div>
+      <div class="profile-info">
+        <h2 id="profile-name">你的名字</h2>
+        <p><span class="dot-blink">●</span> 状态：<span id="status-text">在线，欢迎来坐坐</span></p>
+        <p>签名：<span id="tagline">记录生活 · 收集快乐 · 复古与千禧年爱好者</span></p>
+        <p>你是第 <span class="counter" id="visitor-counter">0000000</span> 位访客</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>关于我</h2>
+      <div class="card">
+        <p>你好！我是 <span class="accent" id="whoami-name2">你的名字</span>。</p>
+        <p>一个普通但有趣的网上冲浪者，喜欢记录生活、收集快乐，对复古和千禧年美学上头。</p>
+        <ul class="tags">
+          <li>复古</li>
+          <li>Y2K</li>
+          <li>像素游戏</li>
+          <li>爵士乐</li>
+          <li>咖啡</li>
+          <li>散步</li>
+        </ul>
+        <p class="t-dim">（占位介绍——把你的真实信息发给我，我帮你填进来。）</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>最新说说</h2>
+      <div id="latest-shuoshuo"></div>
+      <p style="text-align:center"><a class="btn" href="shuoshuo.html">→ 去说说页</a></p>
+    </section>
+
+    <section class="card">
+      <p class="card-title">更新日志</p>
+      <ul class="changelog">
+        <li><b>v0.3</b> 说说、相册、匿名提问箱、留言板涂鸦上线；新主题 retro</li>
+        <li><b>v0.2</b> 千禧年（Y2K）主题</li>
+        <li><b>v0.1</b> 小站开张</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2026 <span id="footer-name">你的名字</span> · WuJu59Web ✿</p>
+    <p>made with ♥ &amp; a bit of retro</p>
+    <p>现在时间：<span id="clock">--:--:--</span></p>
+    <div class="webring">
+      <a href="index.html">⌂ 回到入口</a>
+      <a href="guestbook.html">✎ 给我留言</a>
+      <a href="mailto:hello@example.com">✉ 发邮件</a>
+    </div>
+  </footer>
+
+  <div id="toast"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/shuoshuo.js"></script>
+  <script src="js/main.js"></script>
+  <script src="themes/retro/theme.js"></script>
+</body>
+</html>

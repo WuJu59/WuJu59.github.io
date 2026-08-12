@@ -3,79 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>✿ 你的名字的主页 ✿</title>
-  <meta name="description" content="千禧年风格的个人小站：写日记、聊天、闪闪发光。">
+  <title>WuJu59Web · 入口</title>
+  <meta name="description" content="WuJu59Web：一个复古与现代交织的小站。点击方框进入。">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✿</text></svg>">
   <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="themes/y2k/theme.css">
+  <link rel="stylesheet" href="themes/retro/theme.css">
 </head>
 <body id="top">
-  <div class="marquee" aria-hidden="true">
-    <div class="marquee-track">
-      <span>✦ 欢迎来到我的主页！！✦ Welcome to my homepage !! ✦ 本站施工中，内容不定时掉落 ✦ 记得去留言板逛逛哦 ✦</span>
-      <span>✦ 欢迎来到我的主页！！✦ Welcome to my homepage !! ✦ 本站施工中，内容不定时掉落 ✦ 记得去留言板逛逛哦 ✦</span>
-    </div>
-  </div>
-
   <header class="site-header">
-    <h1 class="site-title">Welcome to my homepage!!</h1>
-    <p class="subtitle">~ 欢迎来到 <span id="whoami-name">你的名字</span> 的网上家园 ~</p>
-    <nav class="nav">
-      <a href="index.html" class="active">★ 首页</a>
-      <a href="about.html">★ 关于我</a>
-      <a href="journal.html">★ 我的日记</a>
-      <a href="guestbook.html">★ 留言板</a>
-    </nav>
+    <h1 class="site-title">WuJu59Web</h1>
+    <p class="site-subtitle">一个复古与现代交织的小站 · <span id="version">v0.3</span></p>
   </header>
 
-  <main class="wrap">
-    <div class="rainbow"></div>
-
-    <section class="card profile">
-      <div class="avatar">✿</div>
-      <div class="profile-info">
-        <h2 id="profile-name">你的名字</h2>
-        <p><span class="blink">●</span> 状态：<span id="status-text">在线！欢迎来聊天 ✿</span></p>
-        <p>签名：<span id="tagline">记录生活 · 收集快乐 · 千禧年美学爱好者</span></p>
-        <p>你是第 <span class="counter" id="visitor-counter">0000000</span> 位访客</p>
-      </div>
-    </section>
-
-    <section>
-      <h2>最新日记 <span class="badge new">NEW!!</span></h2>
-      <div id="latest-posts"></div>
-      <p style="text-align:center"><a class="btn" href="journal.html">→ 看全部日记 ←</a></p>
-    </section>
-
-    <section class="card">
-      <h2>本站指南</h2>
-      <p>这里是我的个人小站：写日记、发照片（以后）、和路过的人聊天。</p>
-      <p>本站是 100% 手工 HTML + CSS + JS 制作，零框架、零依赖，双击就能打开 ✿</p>
-      <ul class="links-list">
-        <li><a href="about.html">★ 关于我</a></li>
-        <li><a href="journal.html">★ 我的日记</a></li>
-        <li><a href="guestbook.html">★ 留言板</a></li>
-      </ul>
-    </section>
-
-    <div class="construction"><span>🚧</span> 本页尚在装修中，新的内容会不定期掉落 ✨ <span>🚧</span></div>
+  <main class="wrap gate">
+    <div class="gate-grid">
+      <div id="gate-boxes" style="display: contents"></div>
+      <a href="home.html" class="gate-square" aria-label="点击方框进入主站" title="点击进入"></a>
+    </div>
+    <p class="gate-hint t-dim">点击中间方框进入主站 ›&nbsp;&nbsp;（以后这里会藏一个彩蛋）</p>
   </main>
 
   <footer>
-    <p>Best viewed in 800×600 ✿ 本站始建于 <span id="since">2026.08.12</span></p>
-    <p>现在时间：<span id="clock">--:--:--</span></p>
-    <div class="webring">
-      <a href="guestbook.html">✎ 给我留言</a>
-      <a href="mailto:hello@example.com">✉ 发邮件给我</a>
-      <a href="#top">↑ 回到顶部</a>
-    </div>
     <p>© 2026 <span id="footer-name">你的名字</span> · WuJu59Web ✿</p>
-    <p>made with ♥ &amp; lots of sparkles ✦</p>
+    <p>made with ♥ &amp; a bit of retro</p>
   </footer>
 
+  <div id="toast"></div>
+
   <script src="js/config.js"></script>
-  <script src="js/posts.js"></script>
   <script src="js/main.js"></script>
-  <script src="themes/y2k/theme.js"></script>
+  <script src="themes/retro/theme.js"></script>
 </body>
 </html>

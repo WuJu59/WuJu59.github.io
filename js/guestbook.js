@@ -1,9 +1,10 @@
 const SEED = [
-  { nick: "站长☆", text: "欢迎来到我的小站！！记得常来玩 ✿", time: "2026-08-12 00:00" }
+  { nick: "站长", text: "欢迎来到小站！可以留言，也可以画个涂鸦 ✿", time: "2026-08-12 00:00", doodle: "" }
 ];
-const STORE_KEY = "y2k-guestbook-v1";
+const STORE_KEY = "wuju59-guestbook-v1";
 
 let entries = loadEntries();
+let doodleActive = false;
 
 function loadEntries() {
   try {
@@ -27,14 +28,6 @@ function nowStr() {
   return new Date().toLocaleString("zh-CN", { hour12: false });
 }
 
-function toast(msg) {
-  const el = $("#toast");
-  el.textContent = msg;
-  el.classList.add("show");
-  clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove("show"), 2200);
-}
-
 function renderEntries() {
   const list = $("#entries");
   if (!list) return;
@@ -42,12 +35,14 @@ function renderEntries() {
   [...entries].reverse().forEach(e => {
     const card = document.createElement("div");
     card.className = "guest-entry";
+    const doodle = e.doodle ? `<img class="doodle-img" src="${e.doodle}" alt="涂鸦">` : "";
     card.innerHTML = `
       <div class="meta">
         <span class="nick">${esc(e.nick)}</span>
         <span><time>${esc(e.time)}</time><button class="del" title="删除这条留言">[删除]</button></span>
       </div>
-      <p>${esc(e.text)}</p>`;
+      <p>${esc(e.text)}</p>
+      ${doodle}`;
     card.querySelector(".del").addEventListener("click", () => {
       entries = entries.filter(x => x !== e);
       saveEntries();
@@ -58,25 +53,84 @@ function renderEntries() {
   });
 }
 
+function initDoodle() {
+  const canvas = $("#doodle");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  canvas.width = 640;
+  canvas.height = 280;
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  let color = "#33302a";
+  let drawing = false;
+
+  const pos = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) * (canvas.width / rect.width),
+      y: (e.clientY - rect.top) * (canvas.height / rect.height)
+    };
+  };
+
+  canvas.addEventListener("pointerdown", (e) => {
+    drawing = true;
+    doodleActive = true;
+    const p = pos(e);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* 忽略 */ }
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!drawing) return;
+    const p = pos(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.strokeStyle = color;
+    ctx.stroke();
+  });
+  canvas.addEventListener("pointerup", () => { drawing = false; });
+  canvas.addEventListener("pointercancel", () => { drawing = false; });
+
+  document.querySelectorAll(".swatch").forEach(sw => {
+    sw.addEventListener("click", () => {
+      color = sw.dataset.color;
+      document.querySelectorAll(".swatch").forEach(x => x.classList.remove("active"));
+      sw.classList.add("active");
+    });
+  });
+
+  $("#doodle-clear").addEventListener("click", () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    doodleActive = false;
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   renderEntries();
+  initDoodle();
 
-  const form = $("#guest-form");
-  form.addEventListener("submit", ev => {
+  $("#guest-form").addEventListener("submit", ev => {
     ev.preventDefault();
     const text = $("#message").value.trim();
     if (!text) {
       toast("写点什么再提交吧");
       return;
     }
-    entries.push({
+    const entry = {
       nick: $("#nick").value.trim() || "匿名访客",
       text,
-      time: nowStr()
-    });
+      time: nowStr(),
+      doodle: ""
+    };
+    if (doodleActive) {
+      try { entry.doodle = $("#doodle").toDataURL("image/png"); } catch (e) { /* 忽略 */ }
+    }
+    entries.push(entry);
     saveEntries();
     renderEntries();
-    form.reset();
+    ev.target.reset();
+    doodleActive = false;
     toast("已留下脚印 ✿");
   });
 

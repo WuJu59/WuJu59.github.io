@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>提问箱 · WuJu59Web</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✿</text></svg>">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="themes/retro/theme.css">
+</head>
+<body id="top">
+  <header class="site-header">
+    <h1 class="site-title">提问箱</h1>
+    <p class="site-subtitle">~ 匿名提问，认真回答 ~</p>
+    <nav class="nav">
+      <a href="home.html">主页</a>
+      <a href="shuoshuo.html">说说</a>
+      <a href="album.html">相册</a>
+      <a href="ask.html" class="active">提问箱</a>
+      <a href="guestbook.html">留言板</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <div class="card">
+      <p>想问什么都行：经历、想法、爱好、或者单纯想聊聊天。完全匿名，我会认真回答。</p>
+      <p class="t-dim">当前问题存在你的浏览器本地，联网同步在路线图里。</p>
+    </div>
+
+    <form id="ask-form" class="card">
+      <label class="field">
+        <span>匿名提问</span>
+        <textarea id="ask-text" rows="3" maxlength="300" placeholder="写一个问题……" required></textarea>
+      </label>
+      <button class="btn" type="submit">丢进提问箱</button>
+    </form>
+
+    <section>
+      <h2>问题与回答</h2>
+      <div id="ask-list"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2026 <span id="footer-name">你的名字</span> · WuJu59Web ✿</p>
+    <p>made with ♥ &amp; a bit of retro</p>
+    <p>现在时间：<span id="clock">--:--:--</span></p>
+    <div class="webring">
+      <a href="index.html">⌂ 回到入口</a>
+      <a href="guestbook.html">✎ 给我留言</a>
+      <a href="mailto:hello@example.com">✉ 发邮件</a>
+    </div>
+  </footer>
+
+  <div id="toast"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/askbox.js"></script>
+  <script src="themes/retro/theme.js"></script>
+</body>
+</html>
