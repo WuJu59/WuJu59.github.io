@@ -5,7 +5,7 @@
 
 :root {
   /* periwinkle 模板同款变量结构，换成橘色 */
-  --header-bg: linear-gradient(160deg, #ffe3c2, #f7b267 55%, #f08a2e);
+  --header-bg: #f08a2e;
   --site-bg: #fff3e2;
   --accent-color: #f08a2e;
   --select-color: #ffd9b3;
@@ -46,8 +46,8 @@
 
 body {
   background-color: var(--bg-color);
-  background-image: radial-gradient(rgba(240, 138, 46, 0.12) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72'%3E%3Cpath d='M36 6 L40 30 L64 36 L40 42 L36 66 L32 42 L8 36 L32 30 Z' fill='%23f08a2e' opacity='0.10'/%3E%3Ccircle cx='14' cy='14' r='1.6' fill='%23f08a2e' opacity='0.14'/%3E%3Ccircle cx='58' cy='54' r='1.4' fill='%23f08a2e' opacity='0.12'/%3E%3Ccircle cx='60' cy='12' r='1' fill='%23f08a2e' opacity='0.10'/%3E%3C/svg%3E");
+  background-size: 72px 72px;
   color: var(--text-color);
 }
 
@@ -151,12 +151,9 @@ h2 { letter-spacing: 0.5px; }
   width: 220px;
   height: 220px;
   margin: 0 auto 12px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 90px;
-  background: linear-gradient(145deg, #ffe3c2, #f7b267 55%, #f08a2e);
+  display: block;
+  object-fit: cover;
+  background: #f5a44d;
   --g: /37.02% 37.02% radial-gradient(#000 calc(71% - 1px), #0000 71%) no-repeat;
   mask:
     90.078% 79.895% var(--g),
@@ -228,6 +225,9 @@ h2 { letter-spacing: 0.5px; }
 .gate-box h3 { margin: 4px 0 6px; font-size: 16px; }
 .gate-box p { margin: 0; font-size: 14px; }
 
+.gate-deco { grid-area: 2 / 1; justify-self: center; width: 64px; opacity: 0.85; }
+.gate-deco-right { grid-area: 2 / 3; width: 84px; }
+
 .gate-square {
   grid-area: 2 / 2;
   justify-self: center;
@@ -266,6 +266,7 @@ h2 { letter-spacing: 0.5px; }
   .gate-grid { display: flex; flex-direction: column; align-items: center; }
   .gate-square { order: -1; width: 180px; }
   .gate-box { width: 100%; }
+  .gate-deco { width: 44px; }
   .layout-side { flex-direction: column; }
   .sidebar { flex: 1 1 auto; width: 100%; }
 }

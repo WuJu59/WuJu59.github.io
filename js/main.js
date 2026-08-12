@@ -120,7 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
     grid.innerHTML = ALBUMS.map(a => {
       const photo = a.url
         ? `<img class="album-photo" src="${a.url}" alt="${a.title}">`
-        : `<div class="album-photo" style="background:linear-gradient(145deg, ${a.from}, ${a.to})">${a.emoji}</div>`;
+        : `<div class="album-photo" style="background:${a.from}">${a.emoji}</div>`;
       return `
         <figure class="album-card">
           ${photo}
