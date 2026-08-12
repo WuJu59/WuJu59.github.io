@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WuJu59Web · 主页</title>
+  <meta name="description" content="WuJu59Web 主站：关于五九、说说、相册、提问箱、留言板。">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✿</text></svg>">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="themes/retro/theme.css">
+</head>
+<body id="top">
+  <header class="site-header">
+    <h1 class="site-title">WuJu59Web</h1>
+    <p class="site-subtitle">~ 欢迎来到 <span id="whoami-name">五九</span> 的小站 · <span id="version">v0.4</span> ~</p>
+    <nav class="nav">
+      <a href="home.html" class="active">主页</a>
+      <a href="shuoshuo.html">说说</a>
+      <a href="album.html">相册</a>
+      <a href="ask.html">提问箱</a>
+      <a href="guestbook.html">留言板</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <div class="layout-side">
+      <aside class="sidebar">
+        <img class="avatar flower" src="assets/chibi.svg" alt="五九的头像">
+        <div class="bio">
+          <p><b>五九</b> speaking～ 欢迎来到我的小站 ✿</p>
+          <p>喜欢记录生活、收集快乐，橘色狂热爱好者。</p>
+        </div>
+        <div class="small-box">
+          <ul>
+            <li>状态：<span id="status-text">在线，欢迎来坐坐</span></li>
+            <li>签名：<span id="tagline">记录生活 · 收集快乐 · 橘色狂热爱好者</span></li>
+            <li>访客：<span class="counter" id="visitor-counter">0000000</span></li>
+            <li>建站：<span id="since">2026.08.12</span></li>
+          </ul>
+        </div>
+        <p class="center"><a class="btn" href="guestbook.html">✎ 给我留言</a></p>
+      </aside>
+
+      <div class="main-col">
+        <section class="card">
+          <p class="card-title">关于五九</p>
+          <p>你好！我是 <span class="accent" id="whoami-name2">五九</span>，一个普通但有趣的网上冲浪者。</p>
+          <p>这里是我的小花园：说说、相册、提问箱和留言板，欢迎随便逛逛。</p>
+          <ul class="tags">
+            <li>复古</li>
+            <li>Y2K</li>
+            <li>像素游戏</li>
+            <li>爵士乐</li>
+            <li>咖啡</li>
+            <li>散步</li>
+          </ul>
+          <p class="t-dim">（占位介绍——把你的真实信息发给我，我帮你填进来。）</p>
+        </section>
+
+        <section>
+          <h2>最新说说</h2>
+          <div id="latest-shuoshuo"></div>
+          <p class="center"><a class="btn" href="shuoshuo.html">→ 去说说页</a></p>
+        </section>
+
+        <section class="card">
+          <p class="card-title">更新日志</p>
+          <ul class="changelog">
+            <li><b>v0.5</b> 去掉渐变、星星背景、原创可爱装饰（chibi 头像 + 星星挂件）</li>
+            <li><b>v0.4</b> 橘色新皮肤（参考 periwinkle 模板）、名字改成五九、新增管理页</li>
+            <li><b>v0.3</b> 入口彩蛋页、说说、相册、提问箱、留言板涂鸦</li>
+            <li><b>v0.2</b> 千禧年（Y2K）主题</li>
+            <li><b>v0.1</b> 小站开张</li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2026 <span id="footer-name">五九</span> · WuJu59Web ✿</p>
+    <p>made with ♥ &amp; a bit of retro</p>
+    <p>现在时间：<span id="clock">--:--:--</span></p>
+    <div class="webring">
+      <a href="index.html">⌂ 回到入口</a>
+      <a href="guestbook.html">✎ 给我留言</a>
+      <a href="mailto:hello@example.com">✉ 发邮件</a>
+    </div>
+  </footer>
+
+  <div id="toast"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/shuoshuo.js"></script>
+  <script src="js/main.js"></script>
+  <script src="themes/retro/theme.js"></script>
+</body>
+</html>
