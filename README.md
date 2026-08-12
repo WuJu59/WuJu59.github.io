@@ -1,4 +1,4 @@
-# 千禧小站（Y2K Personal Site）
+# WuJu59Web · 千禧小站（Y2K Personal Site）
 
 一个千禧年（Y2K）风格的复古个人网站，100% 纯 HTML/CSS/JS，零依赖、零构建，双击就能打开。
 
@@ -11,7 +11,7 @@
 ## 项目结构
 
 ```
-personal-site/
+WuJu59Web/
 ├── index.html        # 首页
 ├── about.html        # 关于我
 ├── journal.html      # 日记（记录）
