@@ -41,7 +41,7 @@ function nowStr() {
 }
 
 function fmtDate(d) {
-  return d ? String(d).slice(0, 10) : "";
+  return fmtDateTime(d);
 }
 
 function renderEntries() {

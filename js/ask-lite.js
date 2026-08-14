@@ -16,7 +16,7 @@ function esc(s) {
 }
 
 function fmtDate(d) {
-  return d ? String(d).slice(0, 10) : "";
+  return fmtDateTime(d);
 }
 
 async function load() {

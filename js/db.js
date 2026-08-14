@@ -80,3 +80,18 @@ const DB = {
     return this.token;
   }
 };
+
+/* 完整时间显示：有具体时刻就显示 年-月-日 时:分，只有日期就显示日期 */
+function fmtDateTime(d) {
+  if (!d) return "";
+  const s = String(d);
+  if (s.includes("T") || s.includes(" ")) {
+    const dt = new Date(d);
+    if (!isNaN(dt)) {
+      const p = n => String(n).padStart(2, "0");
+      return dt.getFullYear() + "-" + p(dt.getMonth() + 1) + "-" + p(dt.getDate()) +
+        " " + p(dt.getHours()) + ":" + p(dt.getMinutes());
+    }
+  }
+  return s.slice(0, 10);
+}
