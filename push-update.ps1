@@ -17,6 +17,7 @@ if (-not $remote) {
 git add -A
 git commit -m "update $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
 git push origin main
+git push origin main:WuJu59Web
 
 Write-Host ''
 Write-Host '已推送 ✓  GitHub Pages 会在 1-3 分钟内自动更新'
