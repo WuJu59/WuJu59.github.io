@@ -91,3 +91,21 @@ WuJu59Web/
 3. **Cloudflare Pages**：同样免费，连接 GitHub 或直接上传。
 
 > 注意：目前留言板、提问箱的数据都存在访客自己的浏览器 localStorage 里（管理台看到的也是本机数据）。上线后大家能看到页面、能留言（各留各的），但想让大家的数据集中到你自己这边，需要接一个数据库后端（比如 Supabase），这是路线图里的下一步。
+
+## 实时更新（每次提交自动上线）
+
+网站是纯静态的，只要开启自动部署，以后**改完代码 push 一次，线上 1-3 分钟内自动更新**，不用再手动传文件。
+
+1. **开启 GitHub Pages**：GitHub 仓库 → Settings → Pages → Source 选「Deploy from a branch」→ 分支选 `main`、目录选 `/ (root)` → Save。开启后你会拿到一个 `https://用户名.github.io/仓库名` 的网址。
+2. **连接本地仓库**（一次性）：在 WuJu59Web 文件夹里运行：
+   ```bash
+   git remote add origin https://github.com/你的用户名/WuJu59Web.git
+   ```
+   如果 GitHub 上的仓库已经有内容（比如网页上传的），第一次推送需要先合并或强推，我可以在你提供仓库地址后帮你处理。
+3. **以后每次更新**：改完文件后运行一键脚本：
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File push-update.ps1
+   ```
+   或者用 GitHub Desktop：打开项目 → Commit → Push origin，效果一样。
+
+想边改边看本地效果（不发布）的话，用 VS Code 的 Live Server 插件打开项目，或运行 `npx serve` 即可。
