@@ -10,28 +10,56 @@ function toast(msg) {
   el._t = setTimeout(() => el.classList.remove("show"), 2200);
 }
 
-function renderShuoshuo(container, pairs) {
-  let likes = {};
-  let liked = [];
-  try {
-    likes = JSON.parse(localStorage.getItem("wuju59-likes") || "{}");
-    liked = JSON.parse(localStorage.getItem("wuju59-liked") || "[]");
-  } catch (e) { /* 忽略 */ }
+function fmtDate(d) {
+  return d ? String(d).slice(0, 10) : "";
+}
 
-  container.innerHTML = pairs.map(({ s, i }) => {
-    const n = likes[i] != null ? likes[i] : s.likes;
-    const isLiked = liked.includes(i);
+/* ---------- 说说 ---------- */
+async function loadShuoshuo() {
+  if (DB.ready()) {
+    try {
+      const rows = await DB.select("shuoshuo");
+      return rows.map(r => ({
+        id: r.id,
+        text: r.text,
+        mood: r.mood || "日常",
+        likes: r.likes || 0,
+        date: fmtDate(r.created_at)
+      }));
+    } catch (e) {
+      console.warn("说说数据库读取失败，回退本地：", e);
+    }
+  }
+  if (typeof SHUOSHUO !== "undefined") {
+    return SHUOSHUO.map((s, i) => ({
+      id: "local-" + i,
+      text: s.text,
+      mood: s.mood,
+      likes: s.likes,
+      date: s.date
+    }));
+  }
+  return [];
+}
+
+function renderShuoshuo(container, items, dbMode) {
+  const likedKey = dbMode ? "wuju59-liked-db" : "wuju59-liked";
+  let liked = [];
+  try { liked = JSON.parse(localStorage.getItem(likedKey) || "[]"); } catch (e) { /* 忽略 */ }
+
+  container.innerHTML = items.map(it => {
+    const isLiked = liked.includes(it.id);
     return `
       <article class="shuoshuo-item">
         <div class="shuoshuo-body">
           <div class="shuoshuo-meta">
             <span>@${SITE.name}</span>
-            <span class="mood">${s.mood}</span>
-            <time>${s.date}</time>
+            <span class="mood">${it.mood}</span>
+            <time>${it.date}</time>
           </div>
-          <p class="shuoshuo-text">${s.text}</p>
+          <p class="shuoshuo-text">${it.text}</p>
           <div class="shuoshuo-actions">
-            <button type="button" class="like ${isLiked ? "liked" : ""}" data-i="${i}" data-n="${n}">♥ ${n}</button>
+            <button type="button" class="like ${isLiked ? "liked" : ""}" data-id="${it.id}" data-likes="${it.likes}">♥ ${it.likes}</button>
             <button type="button" class="comment">评论</button>
           </div>
         </div>
@@ -39,16 +67,25 @@ function renderShuoshuo(container, pairs) {
   }).join("");
 
   container.querySelectorAll(".like").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const i = Number(btn.dataset.i);
-      const n = Number(btn.dataset.n);
-      liked = liked.includes(i) ? liked.filter(x => x !== i) : [...liked, i];
-      likes[i] = liked.includes(i) ? n + 1 : Math.max(0, n - 1);
-      try {
-        localStorage.setItem("wuju59-likes", JSON.stringify(likes));
-        localStorage.setItem("wuju59-liked", JSON.stringify(liked));
-      } catch (e) { /* 忽略 */ }
-      renderShuoshuo(container, pairs);
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+      const likes = Number(btn.dataset.likes);
+      if (liked.includes(id)) return;
+      liked.push(id);
+      try { localStorage.setItem(likedKey, JSON.stringify(liked)); } catch (e) { /* 忽略 */ }
+      if (dbMode) {
+        try { await DB.incrementLike(id); } catch (e) { console.warn("点赞失败：", e); }
+      } else {
+        try {
+          const likesStore = JSON.parse(localStorage.getItem("wuju59-likes") || "{}");
+          const idx = String(id).replace("local-", "");
+          likesStore[idx] = likes + 1;
+          localStorage.setItem("wuju59-likes", JSON.stringify(likesStore));
+        } catch (e) { /* 忽略 */ }
+      }
+      const it = items.find(x => x.id === id);
+      if (it) it.likes = likes + 1;
+      renderShuoshuo(container, items, dbMode);
     });
   });
   container.querySelectorAll(".comment").forEach(btn => {
@@ -56,7 +93,30 @@ function renderShuoshuo(container, pairs) {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+/* ---------- 相册 ---------- */
+async function loadAlbums() {
+  if (DB.ready()) {
+    try {
+      const rows = await DB.select("albums");
+      return rows.map(r => ({
+        title: r.title,
+        note: r.note || "",
+        url: r.url || "",
+        emoji: r.emoji || "✿",
+        color: r.color || "#f5b06e",
+        date: fmtDate(r.created_at)
+      }));
+    } catch (e) {
+      console.warn("相册数据库读取失败，回退本地：", e);
+    }
+  }
+  if (typeof ALBUMS !== "undefined") {
+    return ALBUMS.map(a => ({ ...a }));
+  }
+  return [];
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
   const fill = (id, text) => {
     const el = $(id);
     if (el) el.textContent = text;
@@ -70,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
   fill("#since", SITE.since);
   fill("#version", SITE.version);
 
-  /* 页脚加入管理入口 */
+  /* 页脚管理入口 */
   const webring = $(".webring");
   if (webring && !$(".admin-link", webring)) {
     const a = document.createElement("a");
@@ -101,32 +161,34 @@ document.addEventListener("DOMContentLoaded", () => {
       </article>`).join("");
   }
 
-  /* 说说：首页最新 + 说说页完整列表 */
-  if (typeof SHUOSHUO !== "undefined") {
-    const withIndex = SHUOSHUO.map((s, i) => ({ s, i }));
+  /* 说说 */
+  if (DB.ready() || typeof SHUOSHUO !== "undefined") {
+    const items = await loadShuoshuo();
+    const dbMode = DB.ready();
     const latest = $("#latest-shuoshuo");
-    if (latest) renderShuoshuo(latest, withIndex.slice(0, 3));
+    if (latest) renderShuoshuo(latest, items.slice(0, 3), dbMode);
     const feed = $("#shuoshuo-list");
     if (feed) {
       const count = $("#shuoshuo-count");
-      if (count) count.textContent = `共 ${SHUOSHUO.length} 条说说`;
-      renderShuoshuo(feed, withIndex);
+      if (count) count.textContent = `共 ${items.length} 条说说`;
+      renderShuoshuo(feed, items, dbMode);
     }
   }
 
   /* 相册 */
   const grid = $("#album-grid");
-  if (grid && typeof ALBUMS !== "undefined") {
-    grid.innerHTML = ALBUMS.map(a => {
+  if (grid && (DB.ready() || typeof ALBUMS !== "undefined")) {
+    const albums = await loadAlbums();
+    grid.innerHTML = albums.map(a => {
       const photo = a.url
         ? `<img class="album-photo" src="${a.url}" alt="${a.title}">`
-        : `<div class="album-photo" style="background:${a.from}">${a.emoji}</div>`;
+        : `<div class="album-photo" style="background:${a.color}">${a.emoji}</div>`;
       return `
         <figure class="album-card">
           ${photo}
           <figcaption class="album-info">
             <h3>${a.title}</h3>
-            <time>${a.date}</time>
+            <time>${a.date || ""}</time>
             <p class="t-dim">${a.note}</p>
           </figcaption>
         </figure>`;

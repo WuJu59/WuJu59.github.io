@@ -132,6 +132,8 @@ h2 { letter-spacing: 0.5px; }
 .btn:hover { background: var(--select-color); color: var(--accent-color); }
 .danger-btn { border-color: var(--danger); color: var(--danger); }
 .actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
+.layout-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.layout-row .field { flex: 1; min-width: 120px; }
 
 /* ============ 首页侧边栏布局 ============ */
 .layout-side { display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; }

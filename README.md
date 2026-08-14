@@ -109,3 +109,25 @@ WuJu59Web/
    或者用 GitHub Desktop：打开项目 → Commit → Push origin，效果一样。
 
 想边改边看本地效果（不发布）的话，用 VS Code 的 Live Server 插件打开项目，或运行 `npx serve` 即可。
+
+## 接数据库（Supabase，在线存储）
+
+目前不配置也能用（数据存在浏览器本地）。想让访客的留言/提问真正汇总到你这边，按下面 4 步做：
+
+1. **注册并新建项目**：打开 <https://supabase.com> → Sign in → New project（免费额度够用），记下项目地址。
+2. **建表**：进入项目 → 左侧 SQL Editor → New query → 把项目里的 [supabase/schema.sql](supabase/schema.sql) 全部粘贴进去 → Run。表、权限和示例数据都会自动建好。
+3. **填配置**：项目 → Settings → API，复制 Project URL 和 anon public key，填到 [js/config.js](js/config.js) 的 `SUPABASE` 里：
+   ```js
+   const SUPABASE = {
+     url: "https://你的项目.supabase.co",
+     anonKey: "eyJhbGciOi..."
+   };
+   ```
+4. **建管理员账号**：项目 → Authentication → Users → Add user，填一个邮箱+密码（管理台登录用）。建议在 Authentication → Sign In / Providers → Email 里关闭「Allow new users」（防止别人注册）。
+
+完成后再 push 一次，线上就自动生效：
+   - 公共页面：留言、提问、点赞都进数据库，全网互通；
+   - 管理台：用邮箱+密码登录，可管理说说、相册、提问箱、留言板；
+   - 数据库连不上时自动回退到本地存储，网站不会挂。
+
+> 安全提醒：`anonKey` 可以公开（本来就要给浏览器用）；**`service_role` 密钥绝不能放进前端**。
