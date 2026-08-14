@@ -25,8 +25,10 @@ const DB = {
       body: body ? JSON.stringify(body) : undefined
     });
     if (!r.ok) throw new Error(method + " " + path + " -> " + r.status);
-    if (method === "DELETE") return null;
-    return r.json();
+    /* PostgREST 的插入/更新默认返回空响应体，这里兼容空体 */
+    const text = await r.text();
+    if (!text) return null;
+    return JSON.parse(text);
   },
 
   select(table, order = "created_at") {
