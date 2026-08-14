@@ -17,6 +17,10 @@
   const OB_COLS = 4;
   const OB_ROWS = 2;
   const SCALE = 2; /* 放大 2 倍显示 */
+  const JUMP_VY = -8.0;
+  const GRAVITY = 0.62;
+  const HOLD_GRAVITY = 0.38; /* 按住时重力变小，跳得更高更久 */
+  const MAX_HOLD = 26;       /* 按住最多生效的帧数，防止无限飘 */
 
   const runnerImg = new Image();
   runnerImg.src = "assets/runner.png";
@@ -49,6 +53,8 @@
   let frame = 0;
   let spawnTimer = 70;
   let runFrame = 0;
+  let holding = false;
+  let holdFrames = 0;
 
   /* 黑底上的星星点缀 */
   const stars = [];
@@ -77,6 +83,8 @@
     over = false;
     spawnTimer = 70;
     runFrame = 0;
+    holding = false;
+    holdFrames = 0;
     stateEl.textContent = "空格 / 点击 跳跃";
     scoreEl.textContent = "0";
   }
@@ -84,9 +92,15 @@
   function jump() {
     if (over) { reset(); return; }
     if (player.grounded) {
-      player.vy = -10.5;
+      player.vy = JUMP_VY;
       player.grounded = false;
+      holding = true;
+      holdFrames = 0;
     }
+  }
+
+  function releaseJump() {
+    holding = false;
   }
 
   function update() {
@@ -94,12 +108,17 @@
     frame++;
     frameSizes();
 
-    player.vy += 0.52;
+    const g = (holding && player.vy < 0 && holdFrames < MAX_HOLD) ? HOLD_GRAVITY : GRAVITY;
+    if (holding) holdFrames++;
+    if (holdFrames >= MAX_HOLD) holding = false;
+    player.vy += g;
     player.y += player.vy;
     if (player.y >= GROUND - playerH) {
       player.y = GROUND - playerH;
       player.vy = 0;
       player.grounded = true;
+      holding = false;
+      holdFrames = 0;
     }
     spawnTimer--;
     if (spawnTimer <= 0) {
@@ -124,6 +143,9 @@
     }
     window.__gameDebug.grounded = player.grounded;
     window.__gameDebug.runFrame = runFrame;
+    window.__gameDebug.y = Math.round(player.y);
+    window.__gameDebug.holding = holding;
+    window.__gameDebug.frame = frame;
 
     const pr = { x: player.x + 12, y: player.y + 14, w: playerW - 24, h: playerH - 26 };
     for (const o of obstacles) {
@@ -186,10 +208,18 @@
       jump();
     }
   });
+  document.addEventListener("keyup", (e) => {
+    if (e.code === "Space" || e.code === "ArrowUp") {
+      releaseJump();
+    }
+  });
   canvas.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     jump();
   });
+  canvas.addEventListener("pointerup", releaseJump);
+  canvas.addEventListener("pointercancel", releaseJump);
+  window.addEventListener("blur", releaseJump);
   document.getElementById("game-restart").addEventListener("click", reset);
 
   reset();
