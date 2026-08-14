@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小游戏 · WuJu59Web</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✿</text></svg>">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="themes/retro/theme.css">
+  <style>
+    #game-wrap { text-align: center; }
+    #game-score-row { display: flex; justify-content: center; gap: 24px; font-family: var(--font-mono); margin-bottom: 10px; }
+    #game-canvas { max-width: 100%; border: 2px solid var(--border-color); border-radius: 8px; background: #fffdf8; cursor: pointer; }
+    #game-state { margin: 10px 0 6px; font-size: 14px; }
+    .key-hint { font-size: 13px; color: var(--dim); }
+  </style>
+</head>
+<body id="top">
+  <header class="site-header">
+    <h1 class="site-title">小游戏</h1>
+    <p class="site-subtitle">~ 跳跃障碍，看看你能跑多远 ~</p>
+    <nav class="nav">
+      <a href="home.html">主页</a>
+      <a href="shuoshuo.html">说说</a>
+      <a href="album.html">相册</a>
+      <a href="ask.html">提问箱</a>
+      <a href="guestbook.html">留言板</a>
+      <a href="game.html" class="active">小游戏</a>
+      <a href="ear-tab.html">耳扒</a>
+      <a href="bug.html">反馈</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <div id="game-wrap" class="card">
+      <div id="game-score-row">
+        <span>分数：<b id="game-score">0</b></span>
+        <span>最高分：<b id="game-best">0</b></span>
+      </div>
+      <canvas id="game-canvas" width="720" height="240" aria-label="跳跃障碍小游戏"></canvas>
+      <p id="game-state">空格 / 点击 跳跃</p>
+      <p><button class="btn" type="button" id="game-restart">重新开始</button></p>
+      <p class="key-hint">按 空格 或 ↑，也可以直接点画面；撞到障碍就结束。</p>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2026 <span id="footer-name">五九</span> · WuJu59Web ✿</p>
+    <p>made with ♥ &amp; a bit of retro</p>
+    <p>现在时间：<span id="clock">--:--:--</span></p>
+    <div class="webring">
+      <a href="index.html">⌂ 回到入口</a>
+      <a href="guestbook.html">✎ 给我留言</a>
+      <a href="mailto:hello@example.com">✉ 发邮件</a>
+    </div>
+  </footer>
+
+  <div id="toast"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/game.js"></script>
+  <script src="themes/retro/theme.js"></script>
+</body>
+</html>

@@ -116,6 +116,18 @@ async function loadAlbums() {
   return [];
 }
 
+/* ---------- 耳扒视频 ---------- */
+async function loadVideos() {
+  if (DB.ready()) {
+    try {
+      return await DB.select("videos");
+    } catch (e) {
+      console.warn("视频数据库读取失败：", e);
+    }
+  }
+  return [];
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   const fill = (id, text) => {
     const el = $(id);
@@ -162,16 +174,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   /* 说说 */
-  if (DB.ready() || typeof SHUOSHUO !== "undefined") {
+  const latestEl = $("#latest-shuoshuo");
+  const feedEl = $("#shuoshuo-list");
+  if ((latestEl || feedEl) && (DB.ready() || typeof SHUOSHUO !== "undefined")) {
     const items = await loadShuoshuo();
     const dbMode = DB.ready();
-    const latest = $("#latest-shuoshuo");
-    if (latest) renderShuoshuo(latest, items.slice(0, 3), dbMode);
-    const feed = $("#shuoshuo-list");
-    if (feed) {
+    if (latestEl) renderShuoshuo(latestEl, items.slice(0, 3), dbMode);
+    if (feedEl) {
       const count = $("#shuoshuo-count");
       if (count) count.textContent = `共 ${items.length} 条说说`;
-      renderShuoshuo(feed, items, dbMode);
+      renderShuoshuo(feedEl, items, dbMode);
     }
   }
 
@@ -193,5 +205,20 @@ document.addEventListener("DOMContentLoaded", async () => {
           </figcaption>
         </figure>`;
     }).join("");
+  }
+
+  /* 耳扒视频 */
+  const videoList = $("#video-list");
+  if (videoList && DB.ready()) {
+    const videos = await loadVideos();
+    videoList.innerHTML = videos.length
+      ? videos.map(v => `
+        <article class="video-card">
+          <h3>${v.title}</h3>
+          <time>${fmtDateTime(v.created_at)}</time>
+          <video controls preload="metadata" src="${v.url}"></video>
+          ${v.note ? `<p class="t-dim">${v.note}</p>` : ""}
+        </article>`).join("")
+      : `<p class="t-dim">还没有视频，等站长上传 ✿</p>`;
   }
 });

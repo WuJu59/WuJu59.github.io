@@ -1,6 +1,7 @@
 /* ===== 管理台：说说 / 相册 / 提问箱 / 留言板 ===== */
 const ASK_KEY = "wuju59-askbox-v1";
 const GB_KEY = "wuju59-guestbook-v1";
+const BUG_KEY = "wuju59-bug-reports-v1";
 const SEED_ASKS = [
   { q: "你是怎么学会做网站的？", a: "用 vibe coding：我把想法说清楚，AI 帮我写代码，我再慢慢改。像种花一样，先埋种子。", time: "2026-08-12" },
   { q: "为什么叫 WuJu59Web？", a: "这是我自己起的项目名，没有特别含义，顺口就好。", time: "2026-08-12" }
@@ -14,6 +15,8 @@ let asks = [];
 let entries = [];
 let shuoshuo = [];
 let albums = [];
+let videos = [];
+let bugs = [];
 
 function loadLocal(key, seed) {
   try {
@@ -194,28 +197,23 @@ function renderAlbumsAdmin() {
 async function loadAll() {
   if (DB.ready()) {
     mode = "db";
-    try {
-      [asks, entries, shuoshuo, albums] = await Promise.all([
-        DB.select("asks"), DB.select("guestbook"), DB.select("shuoshuo"), DB.select("albums")
-      ]);
-      $("#db-only-sections").hidden = false;
-      $("#stat-db").hidden = false;
-      $("#mode-note").textContent = "当前：在线数据库模式（Supabase）。";
-    } catch (e) {
-      console.warn("数据库读取失败，回退本地：", e);
-      mode = "local";
-      asks = loadLocal(ASK_KEY, SEED_ASKS);
-      entries = loadLocal(GB_KEY, SEED_GB);
-      $("#db-only-sections").hidden = true;
-      $("#stat-db").hidden = true;
-      $("#mode-note").textContent = "当前：本地存储模式（数据库连接失败，已回退）。";
-    }
+    [asks, entries, shuoshuo, albums, videos, bugs] = await Promise.all([
+      DB.select("asks").catch(() => []),
+      DB.select("guestbook").catch(() => []),
+      DB.select("shuoshuo").catch(() => []),
+      DB.select("albums").catch(() => []),
+      DB.select("videos").catch(() => []),
+      DB.select("bug_reports").catch(() => [])
+    ]);
+    $("#db-only-sections").hidden = false;
+    $("#mode-note").textContent = "当前：在线数据库模式（Supabase）。";
   } else {
     mode = "local";
     asks = loadLocal(ASK_KEY, SEED_ASKS);
     entries = loadLocal(GB_KEY, SEED_GB);
+    bugs = loadLocal(BUG_KEY, []);
+    videos = [];
     $("#db-only-sections").hidden = true;
-    $("#stat-db").hidden = true;
     $("#mode-note").textContent = "当前：本地存储模式（未接数据库）。";
   }
 
@@ -223,10 +221,69 @@ async function loadAll() {
   $("#stat-entries").textContent = entries.length;
   $("#stat-shuoshuo").textContent = shuoshuo.length;
   $("#stat-albums").textContent = albums.length;
+  $("#stat-videos").textContent = videos.length;
+  $("#stat-bugs").textContent = bugs.length;
   renderAsks();
   renderEntries();
   renderShuoshuoAdmin();
   renderAlbumsAdmin();
+  renderVideos();
+  renderBugs();
+}
+
+function renderVideos() {
+  const box = $("#admin-videos");
+  if (!box) return;
+  box.innerHTML = "";
+  [...videos].reverse().forEach(v => {
+    const item = document.createElement("div");
+    item.className = "admin-item";
+    item.innerHTML = `
+      <div class="admin-meta">
+        <span>${esc(v.title)}</span>
+        <time>${fmtDate(v.created_at)}</time>
+        <button type="button" class="admin-del">[删除]</button>
+      </div>
+      <video controls preload="metadata" src="${esc(v.url)}"></video>
+      ${v.note ? `<p class="t-dim">${esc(v.note)}</p>` : ""}`;
+    item.querySelector(".admin-del").addEventListener("click", async () => {
+      try { await DB.remove("videos", v.id); } catch (e) { toast("删除失败"); return; }
+      await loadAll();
+      toast("已删除视频");
+    });
+    box.appendChild(item);
+  });
+}
+
+function renderBugs() {
+  const box = $("#admin-bugs");
+  if (!box) return;
+  box.innerHTML = "";
+  [...bugs].reverse().forEach(b => {
+    const item = document.createElement("div");
+    item.className = "admin-item";
+    const time = b.created_at ? fmtDate(b.created_at) : (b.time || "");
+    item.innerHTML = `
+      <div class="admin-meta">
+        <span>Bug 反馈</span>
+        <time>${esc(time)}</time>
+        <button type="button" class="admin-del">[删除]</button>
+      </div>
+      <p>${esc(b.message)}</p>
+      ${b.page ? `<p class="t-dim">位置：${esc(b.page)}</p>` : ""}
+      ${b.contact ? `<p class="t-dim">联系：${esc(b.contact)}</p>` : ""}`;
+    item.querySelector(".admin-del").addEventListener("click", async () => {
+      if (mode === "db") {
+        try { await DB.remove("bug_reports", b.id); } catch (e) { toast("删除失败"); return; }
+      } else {
+        bugs = bugs.filter(x => x !== b);
+        localStorage.setItem(BUG_KEY, JSON.stringify(bugs));
+      }
+      await loadAll();
+      toast("已删除反馈");
+    });
+    box.appendChild(item);
+  });
 }
 
 function showPanel() {
@@ -319,6 +376,30 @@ document.addEventListener("DOMContentLoaded", () => {
       toast("相册已添加 ✿");
     } catch (e) {
       toast("添加失败，请重试");
+    }
+  });
+
+  $("#admin-video-form").addEventListener("submit", async ev => {
+    ev.preventDefault();
+    const title = $("#admin-video-title").value.trim();
+    const file = $("#admin-video-file").files[0];
+    if (!title || !file) return;
+    const btn = ev.target.querySelector("button[type=submit]");
+    btn.disabled = true;
+    try {
+      const url = await DB.uploadVideo(file);
+      await DB.insert("videos", {
+        title,
+        note: $("#admin-video-note").value.trim(),
+        url
+      });
+      ev.target.reset();
+      await loadAll();
+      toast("视频已上传 ✿");
+    } catch (e) {
+      toast("上传失败（文件过大，或还没运行 v0.10 迁移 SQL）");
+    } finally {
+      btn.disabled = false;
     }
   });
 });

@@ -19,6 +19,9 @@
 | `ask-lite.html` | 简易提问箱（极简、无导航，与主站数据一致） |
 | `guestbook.html` | 留言板 + 涂鸦画板 |
 | `admin.html` | 管理台：登录后管理提问箱与留言板 |
+| `game.html` | 小游戏（跳跃障碍，浏览器小恐龙风格） |
+| `ear-tab.html` | 耳扒：管理员上传的视频 |
+| `bug.html` | Bug 反馈：访客提交问题 |
 
 ## 项目结构
 
@@ -59,6 +62,9 @@ WuJu59Web/
 
 **v0.8 回答图片**：管理台回答问题时可上传图片（存在 Supabase Storage 的公开桶 `answer-images`）。
 现有数据库需要运行一次 [supabase/migration-v0.8.sql](supabase/migration-v0.8.sql)（加一列 + 建存储桶 + 权限），新装数据库直接跑 `schema.sql` 即可。
+
+**v0.10 耳扒视频 + Bug 反馈**：现有数据库需要再运行一次 [supabase/migration-v0.10.sql](supabase/migration-v0.10.sql)
+（建 `videos`、`bug_reports` 两张表 + `videos` 存储桶），之后管理员就能在管理台上传视频，访客也能提交 Bug 反馈了。
 
 > 注意：目前所有数据都存在浏览器 localStorage，管理台与公共页面共用同一份数据；换浏览器或清除缓存会丢失。
 

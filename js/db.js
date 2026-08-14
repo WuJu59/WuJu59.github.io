@@ -68,6 +68,23 @@ const DB = {
     return SUPABASE.url + "/storage/v1/object/public/answer-images/" + path;
   },
 
+  /* 上传视频到 Supabase Storage（公开桶 videos） */
+  async uploadVideo(file) {
+    const ext = (file.name.split(".").pop() || "mp4").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const name = Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
+    const path = encodeURIComponent(name);
+    const r = await fetch(SUPABASE.url + "/storage/v1/object/videos/" + path, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE.anonKey,
+        "Authorization": "Bearer " + (this.token || SUPABASE.anonKey)
+      },
+      body: file
+    });
+    if (!r.ok) throw new Error("upload " + r.status);
+    return SUPABASE.url + "/storage/v1/object/public/videos/" + path;
+  },
+
   async login(email, password) {
     const r = await fetch(SUPABASE.url + "/auth/v1/token?grant_type=password", {
       method: "POST",

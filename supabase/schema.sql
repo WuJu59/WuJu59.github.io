@@ -37,10 +37,28 @@ create table if not exists public.albums (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.videos (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  note text not null default '',
+  url text not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.bug_reports (
+  id uuid primary key default gen_random_uuid(),
+  message text not null,
+  page text not null default '',
+  contact text not null default '',
+  created_at timestamptz not null default now()
+);
+
 alter table public.guestbook enable row level security;
 alter table public.asks enable row level security;
 alter table public.shuoshuo enable row level security;
 alter table public.albums enable row level security;
+alter table public.videos enable row level security;
+alter table public.bug_reports enable row level security;
 
 -- 留言板：人人可读、可留言；只有登录管理员可改/删
 create policy "guestbook select" on public.guestbook for select using (true);
@@ -65,6 +83,17 @@ create policy "albums select" on public.albums for select using (true);
 create policy "albums insert" on public.albums for insert with check (auth.role() = 'authenticated');
 create policy "albums update" on public.albums for update using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "albums delete" on public.albums for delete using (auth.role() = 'authenticated');
+
+-- 视频 / Bug 反馈：账号系统前的临时宽松权限（开发阶段）
+create policy "videos select" on public.videos for select using (true);
+create policy "videos insert" on public.videos for insert with check (true);
+create policy "videos update" on public.videos for update using (true) with check (true);
+create policy "videos delete" on public.videos for delete using (true);
+
+create policy "bug_reports select" on public.bug_reports for select using (true);
+create policy "bug_reports insert" on public.bug_reports for insert with check (true);
+create policy "bug_reports update" on public.bug_reports for update using (true) with check (true);
+create policy "bug_reports delete" on public.bug_reports for delete using (true);
 
 -- 点赞：公开函数，只允许把 likes +1（不能改其它内容）
 create or replace function public.increment_like(row_id uuid)
@@ -94,6 +123,23 @@ create policy "answer-images anon insert" on storage.objects
 drop policy if exists "answer-images anon delete" on storage.objects;
 create policy "answer-images anon delete" on storage.objects
   for delete using (bucket_id = 'answer-images');
+
+-- 视频存储桶（公开）
+insert into storage.buckets (id, name, public)
+values ('videos', 'videos', true)
+on conflict (id) do nothing;
+
+drop policy if exists "videos public read" on storage.objects;
+create policy "videos public read" on storage.objects
+  for select using (bucket_id = 'videos');
+
+drop policy if exists "videos anon insert" on storage.objects;
+create policy "videos anon insert" on storage.objects
+  for insert with check (bucket_id = 'videos');
+
+drop policy if exists "videos anon delete" on storage.objects;
+create policy "videos anon delete" on storage.objects
+  for delete using (bucket_id = 'videos');
 
 -- ============================================================
 -- 示例数据（可删掉换成你自己的）
