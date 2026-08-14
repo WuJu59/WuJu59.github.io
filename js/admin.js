@@ -214,45 +214,16 @@ function showPanel() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const dbReady = DB.ready();
-  if (dbReady) {
-    $("#admin-email-field").hidden = false;
-    const token = sessionStorage.getItem("wuju59-admin-token");
-    if (token) {
-      DB.token = token;
-      showPanel();
-    } else {
-      $("#admin-login").hidden = false;
-      $("#admin-panel").hidden = true;
-    }
+  if (sessionStorage.getItem("wuju59-admin") === "1") {
+    showPanel();
   } else {
-    $("#admin-email-field").hidden = true;
-    if (sessionStorage.getItem("wuju59-admin") === "1") {
-      showPanel();
-    } else {
-      $("#admin-login").hidden = false;
-      $("#admin-panel").hidden = true;
-    }
+    $("#admin-login").hidden = false;
+    $("#admin-panel").hidden = true;
   }
 
   $("#login-form").addEventListener("submit", async ev => {
     ev.preventDefault();
-    if (dbReady) {
-      const email = $("#admin-email").value.trim();
-      const password = $("#admin-password").value;
-      if (!email || !password) {
-        toast("邮箱和密码都要填");
-        return;
-      }
-      try {
-        await DB.login(email, password);
-        sessionStorage.setItem("wuju59-admin-token", DB.token);
-        showPanel();
-        toast("欢迎回来，五九 ✿");
-      } catch (e) {
-        toast("登录失败，请检查邮箱密码");
-      }
-    } else if ($("#admin-password").value === SITE.adminPassword) {
+    if ($("#admin-password").value === SITE.adminPassword) {
       sessionStorage.setItem("wuju59-admin", "1");
       showPanel();
       toast("欢迎回来，五九 ✿");
@@ -263,7 +234,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $("#logout-btn").addEventListener("click", () => {
     sessionStorage.removeItem("wuju59-admin");
-    sessionStorage.removeItem("wuju59-admin-token");
     location.reload();
   });
 

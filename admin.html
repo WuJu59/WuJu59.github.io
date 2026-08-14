@@ -26,17 +26,13 @@
     <section id="admin-login" class="card" hidden>
       <p class="card-title">管理员登录</p>
       <form id="login-form">
-        <label class="field" id="admin-email-field" hidden>
-          <span>管理邮箱（数据库模式）</span>
-          <input id="admin-email" type="email" placeholder="supabase@example.com">
-        </label>
         <label class="field">
           <span>密码</span>
           <input id="admin-password" type="password" placeholder="请输入密码">
         </label>
         <button class="btn" type="submit">登录</button>
       </form>
-      <p class="t-dim">已配置数据库：用 Supabase 的邮箱+密码登录；未配置：用 js/config.js 里的 adminPassword。</p>
+      <p class="t-dim">目前只用密码登录：js/config.js 里的 adminPassword（账号系统开发中）。</p>
     </section>
 
     <div id="admin-panel" hidden>

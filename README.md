@@ -16,6 +16,7 @@
 | `shuoshuo.html` | 说说（QQ 空间风格，可点赞） |
 | `album.html` | 相册（照片占位） |
 | `ask.html` | 匿名提问箱 |
+| `ask-lite.html` | 简易提问箱（极简、无导航，与主站数据一致） |
 | `guestbook.html` | 留言板 + 涂鸦画板 |
 | `admin.html` | 管理台：登录后管理提问箱与留言板 |
 
@@ -49,7 +50,12 @@ WuJu59Web/
 ## 管理台
 
 页面底部「⚙ 管理」进入，或用浏览器打开 `admin.html`。
-默认密码 `j12345678`，请在 `js/config.js` 的 `adminPassword` 里修改。
+默认密码 `j12345678`，请在 `js/config.js` 的 `adminPassword` 里修改。账号系统开发中，暂时只用密码登录。
+
+> ⚠️ 临时权限说明：因为管理页还没接入账号系统，需要到 Supabase 运行一次
+> [supabase/temp-anon-manage.sql](supabase/temp-anon-manage.sql)，
+> 否则管理页的删除/回答会被数据库权限拒绝。这是临时方案（匿名可改数据），
+> 账号系统做好后会恢复严格权限（重新运行 `supabase/schema.sql` 即可）。
 
 > 注意：目前所有数据都存在浏览器 localStorage，管理台与公共页面共用同一份数据；换浏览器或清除缓存会丢失。
 
@@ -124,6 +130,9 @@ WuJu59Web/
    };
    ```
 4. **建管理员账号**：项目 → Authentication → Users → Add user，填一个邮箱+密码（管理台登录用）。建议在 Authentication → Sign In / Providers → Email 里关闭「Allow new users」（防止别人注册）。
+
+> 如果你只用密码登录管理台（v0.7 默认），可以跳过第 4 步，改为运行一次
+> `supabase/temp-anon-manage.sql`（见上文"临时权限说明"）。
 
 完成后再 push 一次，线上就自动生效：
    - 公共页面：留言、提问、点赞都进数据库，全网互通；
