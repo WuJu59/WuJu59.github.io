@@ -7,7 +7,7 @@ const DB = {
   token: null,
 
   ready() {
-    return !!(window.SUPABASE && SUPABASE.url && SUPABASE.anonKey);
+    return !!(typeof SUPABASE !== "undefined" && SUPABASE.url && SUPABASE.anonKey);
   },
 
   authHeaders() {
