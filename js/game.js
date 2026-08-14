@@ -48,6 +48,7 @@
   let over = false;
   let frame = 0;
   let spawnTimer = 70;
+  let runFrame = 0;
 
   /* 黑底上的星星点缀 */
   const stars = [];
@@ -75,6 +76,7 @@
     score = 0;
     over = false;
     spawnTimer = 70;
+    runFrame = 0;
     stateEl.textContent = "空格 / 点击 跳跃";
     scoreEl.textContent = "0";
   }
@@ -102,13 +104,26 @@
     spawnTimer--;
     if (spawnTimer <= 0) {
       const h = 30 + Math.random() * 20;
-      obstacles.push({ x: canvas.width + 20, h, w: h * (obFW / obFH) });
+      obstacles.push({
+        x: canvas.width + 20,
+        h,
+        w: h * (obFW / obFH),
+        fi: Math.floor(Math.random() * (OB_COLS * OB_ROWS))
+      });
       spawnTimer = 60 + Math.random() * 55;
     }
     obstacles.forEach(o => { o.x -= speed; });
     obstacles = obstacles.filter(o => o.x + o.w > -40);
     score += 0.1;
     speed = 2.6 + score / 350;
+
+    /* 只有落地时才推进跑步动画帧；腾空时暂停 */
+    if (player.grounded) {
+      const animSpeed = Math.max(3, Math.round(12 - speed * 0.8));
+      runFrame = Math.floor(frame / animSpeed) % (RUNNER_COLS * RUNNER_ROWS);
+    }
+    window.__gameDebug.grounded = player.grounded;
+    window.__gameDebug.runFrame = runFrame;
 
     const pr = { x: player.x + 12, y: player.y + 14, w: playerW - 24, h: playerH - 26 };
     for (const o of obstacles) {
@@ -142,22 +157,19 @@
     ctx.fillStyle = "#555";
     ctx.fillRect(0, GROUND, canvas.width, 2);
 
-    /* 障碍（4x2 网格切帧，8 帧循环播放） */
+    /* 障碍（4x2 网格切帧，每个障碍随机取一帧，不播放） */
     if (obstacleImg.naturalWidth) {
-      const obIdx = Math.floor(frame / 8) % (OB_COLS * OB_ROWS);
-      const obRow = Math.floor(obIdx / OB_COLS);
-      const obCol = obIdx % OB_COLS;
       for (const o of obstacles) {
+        const obRow = Math.floor(o.fi / OB_COLS);
+        const obCol = o.fi % OB_COLS;
         ctx.drawImage(obstacleImg, obCol * obFW, obRow * obFH, obFW, obFH, o.x, GROUND - o.h, o.w, o.h);
       }
     }
 
     /* 角色（8x4 网格切帧，32 帧循环播放，随速度加快） */
     if (runnerImg.naturalWidth) {
-      const animSpeed = Math.max(3, Math.round(12 - speed * 0.8));
-      const idx = Math.floor(frame / animSpeed) % (RUNNER_COLS * RUNNER_ROWS);
-      const row = Math.floor(idx / RUNNER_COLS);
-      const col = idx % RUNNER_COLS;
+      const row = Math.floor(runFrame / RUNNER_COLS);
+      const col = runFrame % RUNNER_COLS;
       ctx.drawImage(runnerImg, col * runnerFW, row * runnerFH, runnerFW, runnerFH, player.x, player.y, playerW, playerH);
     }
   }
