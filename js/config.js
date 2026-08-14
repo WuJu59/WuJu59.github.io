@@ -13,7 +13,9 @@ const SITE = {
    留空 = 使用本地存储（localStorage）；填好后自动切换为在线存储。
    设置方法见 README「接数据库」一节。 */
 const SUPABASE = {
-  url: "",
+  /* 注意：这里只填项目根地址，不要带 /rest/v1/ */
+  url: "https://cnvakfvfwztotnqmhxag.supabase.co",
+  /* 在 Supabase → Settings → API 里复制 anon public key（很长，eyJ… 开头） */
   anonKey: ""
 };
 
