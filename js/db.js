@@ -51,6 +51,23 @@ const DB = {
     return this.request("POST", "/rest/v1/rpc/increment_like", { row_id: id });
   },
 
+  /* 上传图片到 Supabase Storage（公开桶 answer-images） */
+  async uploadImage(file) {
+    const ext = (file.name.split(".").pop() || "png").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const name = Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
+    const path = encodeURIComponent(name);
+    const r = await fetch(SUPABASE.url + "/storage/v1/object/answer-images/" + path, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE.anonKey,
+        "Authorization": "Bearer " + (this.token || SUPABASE.anonKey)
+      },
+      body: file
+    });
+    if (!r.ok) throw new Error("upload " + r.status);
+    return SUPABASE.url + "/storage/v1/object/public/answer-images/" + path;
+  },
+
   async login(email, password) {
     const r = await fetch(SUPABASE.url + "/auth/v1/token?grant_type=password", {
       method: "POST",

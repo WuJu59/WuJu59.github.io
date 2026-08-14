@@ -57,6 +57,9 @@ WuJu59Web/
 > 否则管理页的删除/回答会被数据库权限拒绝。这是临时方案（匿名可改数据），
 > 账号系统做好后会恢复严格权限（重新运行 `supabase/schema.sql` 即可）。
 
+**v0.8 回答图片**：管理台回答问题时可上传图片（存在 Supabase Storage 的公开桶 `answer-images`）。
+现有数据库需要运行一次 [supabase/migration-v0.8.sql](supabase/migration-v0.8.sql)（加一列 + 建存储桶 + 权限），新装数据库直接跑 `schema.sql` 即可。
+
 > 注意：目前所有数据都存在浏览器 localStorage，管理台与公共页面共用同一份数据；换浏览器或清除缓存会丢失。
 
 ## 当主题用 / 当彩蛋用

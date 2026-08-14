@@ -53,6 +53,7 @@ function renderQuestions() {
     item.className = "ask-item";
     const question = q.question || q.q;
     const answer = q.answer || q.a || "";
+    const imgUrl = q.answer_image || "";
     const time = q.created_at ? fmtDate(q.created_at) : (q.time || "");
 
     let answerHtml;
@@ -65,6 +66,9 @@ function renderQuestions() {
         <input type="text" maxlength="200" placeholder="写回答……">
         <button class="btn" type="submit">回答</button>
       </form>`;
+    }
+    if (imgUrl) {
+      answerHtml += `<img class="ask-img" src="${esc(imgUrl)}" alt="回答图片">`;
     }
 
     const del = mode === "local"

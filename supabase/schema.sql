@@ -15,6 +15,7 @@ create table if not exists public.asks (
   id uuid primary key default gen_random_uuid(),
   question text not null,
   answer text not null default '',
+  answer_image text not null default '',
   created_at timestamptz not null default now()
 );
 
@@ -76,6 +77,23 @@ as $$
 $$;
 
 grant execute on function public.increment_like(uuid) to anon, authenticated;
+
+-- 回答图片存储桶（公开）
+insert into storage.buckets (id, name, public)
+values ('answer-images', 'answer-images', true)
+on conflict (id) do nothing;
+
+drop policy if exists "answer-images public read" on storage.objects;
+create policy "answer-images public read" on storage.objects
+  for select using (bucket_id = 'answer-images');
+
+drop policy if exists "answer-images anon insert" on storage.objects;
+create policy "answer-images anon insert" on storage.objects
+  for insert with check (bucket_id = 'answer-images');
+
+drop policy if exists "answer-images anon delete" on storage.objects;
+create policy "answer-images anon delete" on storage.objects
+  for delete using (bucket_id = 'answer-images');
 
 -- ============================================================
 -- 示例数据（可删掉换成你自己的）

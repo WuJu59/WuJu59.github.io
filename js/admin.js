@@ -46,11 +46,13 @@ function renderAsks() {
     item.className = "admin-item";
     const question = q.question || q.q;
     const answer = q.answer || q.a || "";
+    const imgUrl = q.answer_image || "";
     const time = q.created_at ? fmtDate(q.created_at) : (q.time || "");
     const answerHtml = answer
-      ? `<p class="ask-a">${esc(answer)}</p>`
+      ? `<p class="ask-a">${esc(answer)}</p>${imgUrl ? `<img class="ask-img" src="${esc(imgUrl)}" alt="回答图片">` : ""}`
       : `<form class="ask-answer-form">
           <input type="text" maxlength="200" placeholder="写回答……">
+          <input type="file" accept="image/*">
           <button class="btn" type="submit">回答</button>
         </form>`;
     item.innerHTML = `
@@ -76,12 +78,23 @@ function renderAsks() {
     if (form) {
       form.addEventListener("submit", async ev => {
         ev.preventDefault();
-        const v = form.querySelector("input").value.trim();
-        if (!v) return;
+        const v = form.querySelector('input[type="text"]').value.trim();
+        const file = form.querySelector('input[type="file"]').files[0];
+        if (!v && !file) return;
+        let imgUrl = "";
+        if (file) {
+          try {
+            imgUrl = mode === "db" ? await DB.uploadImage(file) : await readFileAsDataURL(file);
+          } catch (e) {
+            toast("图片上传失败，请重试");
+            return;
+          }
+        }
         if (mode === "db") {
-          try { await DB.update("asks", q.id, { answer: v }); } catch (e) { toast("保存失败"); return; }
+          try { await DB.update("asks", q.id, { answer: v, answer_image: imgUrl }); } catch (e) { toast("保存失败"); return; }
         } else {
           q.a = v;
+          q.answer_image = imgUrl;
           saveLocal(ASK_KEY, asks);
         }
         await loadAll();
@@ -89,6 +102,15 @@ function renderAsks() {
       });
     }
     box.appendChild(item);
+  });
+}
+
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
   });
 }
 

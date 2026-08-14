@@ -376,7 +376,7 @@ h2 { letter-spacing: 0.5px; }
   white-space: pre-wrap;
 }
 .ask-a::before { content: "A："; font-weight: 700; }
-.ask-answer-form { display: flex; gap: 8px; margin-top: 8px; }
+.ask-answer-form { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
 .ask-answer-form input {
   flex: 1;
   border: 1px solid var(--outline-color);
@@ -384,6 +384,14 @@ h2 { letter-spacing: 0.5px; }
   padding: 6px 8px;
   font: inherit;
   background: #fff;
+}
+.ask-answer-form input[type="file"] { flex: 1 1 160px; padding: 4px; }
+.ask-img {
+  max-width: 260px;
+  border: 2px solid var(--line);
+  border-radius: 6px;
+  margin-top: 8px;
+  display: block;
 }
 .ask-del, .admin-del {
   background: none;

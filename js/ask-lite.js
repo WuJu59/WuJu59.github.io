@@ -45,13 +45,15 @@ function render() {
   [...questions].reverse().forEach(q => {
     const question = q.question || q.q;
     const answer = q.answer || q.a || "";
+    const imgUrl = q.answer_image || "";
     const time = q.created_at ? fmtDate(q.created_at) : (q.time || "");
     const div = document.createElement("div");
     div.className = "q";
     const a = answer
       ? `<div class="a">答：${esc(answer)}</div>`
       : `<div class="a">（等待回答…）</div>`;
-    div.innerHTML = `<div class="meta">${esc(time)}</div><div>问：${esc(question)}</div>${a}`;
+    const img = imgUrl ? `<img src="${esc(imgUrl)}" alt="回答图片">` : "";
+    div.innerHTML = `<div class="meta">${esc(time)}</div><div>问：${esc(question)}</div>${a}${img}`;
     list.appendChild(div);
   });
 }
