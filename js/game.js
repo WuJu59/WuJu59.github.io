@@ -1,4 +1,4 @@
-/* 跳跃障碍小游戏：角色动图按帧播放 + 障碍图片，黑底 */
+/* 跳跃障碍小游戏：角色动图按 8x4 网格切帧播放，障碍按 4x2 网格，黑底 */
 (function () {
   const canvas = document.getElementById("game-canvas");
   if (!canvas) return;
@@ -11,14 +11,34 @@
   canvas.height = 240;
   const GROUND = 196;
 
+  /* 网格切帧参数（按你的动图设定） */
+  const RUNNER_COLS = 8;
+  const RUNNER_ROWS = 4;
+  const OB_COLS = 4;
+  const OB_ROWS = 2;
+  const SCALE = 2; /* 放大 2 倍显示 */
+
   const runnerImg = new Image();
   runnerImg.src = "assets/runner.png";
   const obstacleImg = new Image();
   obstacleImg.src = "assets/obstacle.png";
 
-  let frames = [];
-  let playerH = 56;
-  let playerW = 22;
+  /* 帧尺寸（按图实际尺寸均分） */
+  let runnerFW = 40, runnerFH = 56;
+  let obFW = 40, obFH = 56;
+  function frameSizes() {
+    if (runnerImg.naturalWidth) {
+      runnerFW = runnerImg.naturalWidth / RUNNER_COLS;
+      runnerFH = runnerImg.naturalHeight / RUNNER_ROWS;
+    }
+    if (obstacleImg.naturalWidth) {
+      obFW = obstacleImg.naturalWidth / OB_COLS;
+      obFH = obstacleImg.naturalHeight / OB_ROWS;
+    }
+  }
+
+  const playerW = runnerFW * SCALE; /* 80 */
+  const playerH = runnerFH * SCALE; /* 112 */
   const player = { x: 64, y: GROUND - playerH, vy: 0, grounded: true };
 
   let obstacles = [];
@@ -29,7 +49,7 @@
   let frame = 0;
   let spawnTimer = 70;
 
-  /* 背景小星星（固定位置，黑底上的点缀） */
+  /* 黑底上的星星点缀 */
   const stars = [];
   for (let i = 0; i < 26; i++) {
     stars.push({ x: Math.random() * 720, y: Math.random() * 150, r: 1 + Math.random() * 1.5 });
@@ -39,68 +59,12 @@
   bestEl.textContent = String(best);
   scoreEl.textContent = "0";
 
-  /* 从透明底动图里自动切帧 */
-  function analyzeFrames(img) {
-    const c = document.createElement("canvas");
-    c.width = img.naturalWidth;
-    c.height = img.naturalHeight;
-    const cx = c.getContext("2d");
-    cx.drawImage(img, 0, 0);
-    const { data } = cx.getImageData(0, 0, c.width, c.height);
-    const w = c.width, h = c.height;
-    const colHas = new Array(w).fill(false);
-    for (let x = 0; x < w; x++) {
-      for (let y = 0; y < h; y++) {
-        if (data[(y * w + x) * 4 + 3] > 20) { colHas[x] = true; break; }
-      }
-    }
-    const runs = [];
-    let start = -1;
-    for (let x = 0; x <= w; x++) {
-      const v = x < w && colHas[x];
-      if (v && start < 0) start = x;
-      if (!v && start >= 0) {
-        if (x - start >= 4) runs.push([start, x - 1]);
-        start = -1;
-      }
-    }
-    if (!runs.length) return [{ x: 0, y: 0, w, h }];
-    return runs.map(([x0, x1]) => {
-      let y0 = h, y1 = -1;
-      for (let x = x0; x <= x1; x++) {
-        for (let y = 0; y < h; y++) {
-          if (data[(y * w + x) * 4 + 3] > 20) { if (y < y0) y0 = y; if (y > y1) y1 = y; }
-        }
-      }
-      return { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
-    });
-  }
-
-  function initFrames() {
-    if (!runnerImg.naturalWidth) return false;
-    try {
-      frames = analyzeFrames(runnerImg);
-    } catch (e) {
-      /* 本地 file:// 或跨域环境 canvas 会被污染，回退到均分切帧 */
-      const w = runnerImg.naturalWidth;
-      const h = runnerImg.naturalHeight;
-      const n = 8;
-      const slot = w / n;
-      const fw = slot * 0.62;
-      frames = Array.from({ length: n }, (_, i) => ({
-        x: slot * i + (slot - fw) / 2,
-        y: h * 0.06,
-        w: fw,
-        h: h * 0.9
-      }));
-    }
-    const fr = frames[0];
-    playerH = 56;
-    playerW = Math.max(10, fr.w * (playerH / fr.h));
-    player.y = GROUND - playerH;
-    window.__gameDebug = { frameCount: frames.length, playerW: Math.round(playerW), playerH };
-    return true;
-  }
+  window.__gameDebug = {
+    frameCount: RUNNER_COLS * RUNNER_ROWS,
+    playerW: Math.round(playerW),
+    playerH: Math.round(playerH),
+    obstacleFrames: OB_COLS * OB_ROWS
+  };
 
   function reset() {
     player.y = GROUND - playerH;
@@ -126,7 +90,7 @@
   function update() {
     if (over) return;
     frame++;
-    if (!frames.length) initFrames();
+    frameSizes();
 
     player.vy += 0.52;
     player.y += player.vy;
@@ -137,19 +101,18 @@
     }
     spawnTimer--;
     if (spawnTimer <= 0) {
-      const h = 24 + Math.random() * 22;
-      const ratio = obstacleImg.naturalWidth ? obstacleImg.naturalWidth / obstacleImg.naturalHeight : 1.43;
-      obstacles.push({ x: canvas.width + 20, h, w: h * ratio });
+      const h = 30 + Math.random() * 20;
+      obstacles.push({ x: canvas.width + 20, h, w: h * (obFW / obFH) });
       spawnTimer = 60 + Math.random() * 55;
     }
     obstacles.forEach(o => { o.x -= speed; });
-    obstacles = obstacles.filter(o => o.x + o.w > -30);
+    obstacles = obstacles.filter(o => o.x + o.w > -40);
     score += 0.1;
     speed = 2.6 + score / 350;
 
-    const pr = { x: player.x + 4, y: player.y + 8, w: playerW - 8, h: playerH - 10 };
+    const pr = { x: player.x + 12, y: player.y + 14, w: playerW - 24, h: playerH - 26 };
     for (const o of obstacles) {
-      const or = { x: o.x + 3, y: GROUND - o.h + 4, w: o.w - 6, h: o.h - 4 };
+      const or = { x: o.x + 4, y: GROUND - o.h + 5, w: o.w - 8, h: o.h - 5 };
       if (pr.x < or.x + or.w && pr.x + pr.w > or.x && pr.y < or.y + or.h && pr.y + pr.h > or.y) {
         over = true;
         const s = Math.floor(score);
@@ -179,18 +142,23 @@
     ctx.fillStyle = "#555";
     ctx.fillRect(0, GROUND, canvas.width, 2);
 
-    /* 障碍 */
+    /* 障碍（4x2 网格切帧，8 帧循环播放） */
     if (obstacleImg.naturalWidth) {
+      const obIdx = Math.floor(frame / 8) % (OB_COLS * OB_ROWS);
+      const obRow = Math.floor(obIdx / OB_COLS);
+      const obCol = obIdx % OB_COLS;
       for (const o of obstacles) {
-        ctx.drawImage(obstacleImg, o.x, GROUND - o.h, o.w, o.h);
+        ctx.drawImage(obstacleImg, obCol * obFW, obRow * obFH, obFW, obFH, o.x, GROUND - o.h, o.w, o.h);
       }
     }
 
-    /* 角色（帧播放） */
-    if (frames.length) {
-      const animSpeed = Math.max(3, Math.round(9 - speed * 0.8));
-      const fr = frames[Math.floor(frame / animSpeed) % frames.length];
-      ctx.drawImage(runnerImg, fr.x, fr.y, fr.w, fr.h, player.x, player.y, playerW, playerH);
+    /* 角色（8x4 网格切帧，32 帧循环播放，随速度加快） */
+    if (runnerImg.naturalWidth) {
+      const animSpeed = Math.max(3, Math.round(12 - speed * 0.8));
+      const idx = Math.floor(frame / animSpeed) % (RUNNER_COLS * RUNNER_ROWS);
+      const row = Math.floor(idx / RUNNER_COLS);
+      const col = idx % RUNNER_COLS;
+      ctx.drawImage(runnerImg, col * runnerFW, row * runnerFH, runnerFW, runnerFH, player.x, player.y, playerW, playerH);
     }
   }
 
@@ -213,6 +181,6 @@
   document.getElementById("game-restart").addEventListener("click", reset);
 
   reset();
-  initFrames();
+  frameSizes();
   loop();
 })();
