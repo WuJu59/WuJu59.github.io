@@ -7,20 +7,20 @@
   const bestEl = document.getElementById("game-best");
   const stateEl = document.getElementById("game-state");
 
-  canvas.width = 720;
-  canvas.height = 240;
-  const GROUND = 196;
+  canvas.width = 960;
+  canvas.height = 360;
+  const GROUND = 305;
 
   /* 网格切帧参数（按你的动图设定） */
   const RUNNER_COLS = 8;
   const RUNNER_ROWS = 4;
   const OB_COLS = 4;
   const OB_ROWS = 2;
-  const SCALE = 2; /* 放大 2 倍显示 */
-  const JUMP_VY = -8.0;
+  const SCALE = 2.8; /* 放大显示倍数 */
+  const JUMP_VY = -10;
   const GRAVITY = 0.62;
-  const HOLD_GRAVITY = 0.38; /* 按住时重力变小，跳得更高更久 */
-  const MAX_HOLD = 26;       /* 按住最多生效的帧数，防止无限飘 */
+  const HOLD_GRAVITY = 0.34; /* 按住时重力变小，跳得更高更久 */
+  const MAX_HOLD = 42;       /* 按住最多生效的帧数，防止无限飘 */
 
   const runnerImg = new Image();
   runnerImg.src = "assets/runner.png";
@@ -59,7 +59,7 @@
   /* 黑底上的星星点缀 */
   const stars = [];
   for (let i = 0; i < 26; i++) {
-    stars.push({ x: Math.random() * 720, y: Math.random() * 150, r: 1 + Math.random() * 1.5 });
+    stars.push({ x: Math.random() * canvas.width, y: Math.random() * (canvas.height * 0.55), r: 1 + Math.random() * 1.5 });
   }
 
   try { best = Number(localStorage.getItem("wuju59-game-best")) || 0; } catch (e) { /* 忽略 */ }
@@ -122,13 +122,14 @@
     }
     spawnTimer--;
     if (spawnTimer <= 0) {
-      const h = 30 + Math.random() * 20;
+      const h = 55 + Math.random() * 40;
       obstacles.push({
         x: canvas.width + 20,
         h,
         w: h * (obFW / obFH),
         fi: Math.floor(Math.random() * (OB_COLS * OB_ROWS))
       });
+      window.__gameDebug.lastObstacleH = Math.round(h);
       spawnTimer = 60 + Math.random() * 55;
     }
     obstacles.forEach(o => { o.x -= speed; });
