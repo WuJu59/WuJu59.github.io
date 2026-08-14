@@ -1,4 +1,4 @@
-/* 跳跃障碍小游戏（浏览器小恐龙风格） */
+/* 跳跃障碍小游戏：角色动图按帧播放 + 障碍图片，黑底 */
 (function () {
   const canvas = document.getElementById("game-canvas");
   if (!canvas) return;
@@ -9,30 +9,108 @@
 
   canvas.width = 720;
   canvas.height = 240;
-  const GROUND = 192;
+  const GROUND = 196;
 
-  const player = { x: 64, w: 38, h: 44, y: GROUND - 44, vy: 0, grounded: true };
+  const runnerImg = new Image();
+  runnerImg.src = "assets/runner.png";
+  const obstacleImg = new Image();
+  obstacleImg.src = "assets/obstacle.png";
+
+  let frames = [];
+  let playerH = 56;
+  let playerW = 22;
+  const player = { x: 64, y: GROUND - playerH, vy: 0, grounded: true };
+
   let obstacles = [];
-  let speed = 4.2;
+  let speed = 2.6;
   let score = 0;
   let best = 0;
   let over = false;
   let frame = 0;
-  let spawnTimer = 40;
+  let spawnTimer = 70;
+
+  /* 背景小星星（固定位置，黑底上的点缀） */
+  const stars = [];
+  for (let i = 0; i < 26; i++) {
+    stars.push({ x: Math.random() * 720, y: Math.random() * 150, r: 1 + Math.random() * 1.5 });
+  }
 
   try { best = Number(localStorage.getItem("wuju59-game-best")) || 0; } catch (e) { /* 忽略 */ }
   bestEl.textContent = String(best);
   scoreEl.textContent = "0";
 
+  /* 从透明底动图里自动切帧 */
+  function analyzeFrames(img) {
+    const c = document.createElement("canvas");
+    c.width = img.naturalWidth;
+    c.height = img.naturalHeight;
+    const cx = c.getContext("2d");
+    cx.drawImage(img, 0, 0);
+    const { data } = cx.getImageData(0, 0, c.width, c.height);
+    const w = c.width, h = c.height;
+    const colHas = new Array(w).fill(false);
+    for (let x = 0; x < w; x++) {
+      for (let y = 0; y < h; y++) {
+        if (data[(y * w + x) * 4 + 3] > 20) { colHas[x] = true; break; }
+      }
+    }
+    const runs = [];
+    let start = -1;
+    for (let x = 0; x <= w; x++) {
+      const v = x < w && colHas[x];
+      if (v && start < 0) start = x;
+      if (!v && start >= 0) {
+        if (x - start >= 4) runs.push([start, x - 1]);
+        start = -1;
+      }
+    }
+    if (!runs.length) return [{ x: 0, y: 0, w, h }];
+    return runs.map(([x0, x1]) => {
+      let y0 = h, y1 = -1;
+      for (let x = x0; x <= x1; x++) {
+        for (let y = 0; y < h; y++) {
+          if (data[(y * w + x) * 4 + 3] > 20) { if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        }
+      }
+      return { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+    });
+  }
+
+  function initFrames() {
+    if (!runnerImg.naturalWidth) return false;
+    try {
+      frames = analyzeFrames(runnerImg);
+    } catch (e) {
+      /* 本地 file:// 或跨域环境 canvas 会被污染，回退到均分切帧 */
+      const w = runnerImg.naturalWidth;
+      const h = runnerImg.naturalHeight;
+      const n = 8;
+      const slot = w / n;
+      const fw = slot * 0.62;
+      frames = Array.from({ length: n }, (_, i) => ({
+        x: slot * i + (slot - fw) / 2,
+        y: h * 0.06,
+        w: fw,
+        h: h * 0.9
+      }));
+    }
+    const fr = frames[0];
+    playerH = 56;
+    playerW = Math.max(10, fr.w * (playerH / fr.h));
+    player.y = GROUND - playerH;
+    window.__gameDebug = { frameCount: frames.length, playerW: Math.round(playerW), playerH };
+    return true;
+  }
+
   function reset() {
-    player.y = GROUND - player.h;
+    player.y = GROUND - playerH;
     player.vy = 0;
     player.grounded = true;
     obstacles = [];
-    speed = 4.2;
+    speed = 2.6;
     score = 0;
     over = false;
-    spawnTimer = 40;
+    spawnTimer = 70;
     stateEl.textContent = "空格 / 点击 跳跃";
     scoreEl.textContent = "0";
   }
@@ -48,25 +126,28 @@
   function update() {
     if (over) return;
     frame++;
+    if (!frames.length) initFrames();
+
     player.vy += 0.52;
     player.y += player.vy;
-    if (player.y >= GROUND - player.h) {
-      player.y = GROUND - player.h;
+    if (player.y >= GROUND - playerH) {
+      player.y = GROUND - playerH;
       player.vy = 0;
       player.grounded = true;
     }
     spawnTimer--;
     if (spawnTimer <= 0) {
-      const h = 22 + Math.random() * 26;
-      obstacles.push({ x: canvas.width + 20, w: 14 + Math.random() * 10, h });
-      spawnTimer = 55 + Math.random() * 45;
+      const h = 24 + Math.random() * 22;
+      const ratio = obstacleImg.naturalWidth ? obstacleImg.naturalWidth / obstacleImg.naturalHeight : 1.43;
+      obstacles.push({ x: canvas.width + 20, h, w: h * ratio });
+      spawnTimer = 60 + Math.random() * 55;
     }
     obstacles.forEach(o => { o.x -= speed; });
-    obstacles = obstacles.filter(o => o.x + o.w > -20);
+    obstacles = obstacles.filter(o => o.x + o.w > -30);
     score += 0.1;
-    speed = 4.2 + score / 320;
+    speed = 2.6 + score / 350;
 
-    const pr = { x: player.x + 6, y: player.y + 6, w: player.w - 12, h: player.h - 8 };
+    const pr = { x: player.x + 4, y: player.y + 8, w: playerW - 8, h: playerH - 10 };
     for (const o of obstacles) {
       const or = { x: o.x + 3, y: GROUND - o.h + 4, w: o.w - 6, h: o.h - 4 };
       if (pr.x < or.x + or.w && pr.x + pr.w > or.x && pr.y < or.y + or.h && pr.y + pr.h > or.y) {
@@ -85,46 +166,31 @@
   }
 
   function draw() {
-    ctx.fillStyle = "#fffdf8";
+    ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    /* 云 */
-    ctx.fillStyle = "#f2d9b8";
-    ctx.beginPath();
-    ctx.arc(560, 34, 12, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(575, 28, 10, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(588, 34, 8, 0, Math.PI * 2);
-    ctx.fill();
-    /* 地面 */
-    ctx.fillStyle = "#b8a98f";
-    ctx.fillRect(0, GROUND, canvas.width, 2);
-    /* 障碍（仙人掌） */
-    ctx.fillStyle = "#6f8f4f";
-    for (const o of obstacles) {
-      ctx.fillRect(o.x, GROUND - o.h, o.w, o.h);
-      ctx.fillRect(o.x - 5, GROUND - o.h - 9, 6, 12);
-      ctx.fillRect(o.x + o.w - 1, GROUND - o.h - 9, 6, 12);
+    /* 星星 */
+    ctx.fillStyle = "#888";
+    for (const s of stars) {
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
     }
-    /* 小恐龙 */
-    ctx.fillStyle = "#3a2c1e";
-    const p = player;
-    ctx.fillRect(p.x + 12, p.y - 2, 24, 16);
-    ctx.fillRect(p.x, p.y + 10, p.w, p.h - 10);
-    ctx.fillRect(p.x - 7, p.y + 18, 9, 7);
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(p.x + 26, p.y + 3, 6, 6);
-    ctx.fillStyle = "#3a2c1e";
-    ctx.fillRect(p.x + 30, p.y + 5, 3, 3);
-    if (player.grounded) {
-      const step = Math.floor(frame / 7) % 2;
-      ctx.fillRect(p.x + 4, p.y + p.h - 6, 12, 6 - step * 3);
-      ctx.fillRect(p.x + 20, p.y + p.h - 6, 12, 3 + step * 3);
-    } else {
-      ctx.fillRect(p.x + 4, p.y + p.h - 6, 12, 6);
-      ctx.fillRect(p.x + 20, p.y + p.h - 6, 12, 6);
+    /* 地面 */
+    ctx.fillStyle = "#555";
+    ctx.fillRect(0, GROUND, canvas.width, 2);
+
+    /* 障碍 */
+    if (obstacleImg.naturalWidth) {
+      for (const o of obstacles) {
+        ctx.drawImage(obstacleImg, o.x, GROUND - o.h, o.w, o.h);
+      }
+    }
+
+    /* 角色（帧播放） */
+    if (frames.length) {
+      const animSpeed = Math.max(3, Math.round(9 - speed * 0.8));
+      const fr = frames[Math.floor(frame / animSpeed) % frames.length];
+      ctx.drawImage(runnerImg, fr.x, fr.y, fr.w, fr.h, player.x, player.y, playerW, playerH);
     }
   }
 
@@ -147,5 +213,6 @@
   document.getElementById("game-restart").addEventListener("click", reset);
 
   reset();
+  initFrames();
   loop();
 })();
