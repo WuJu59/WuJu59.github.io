@@ -94,9 +94,8 @@
   /* 让角色可见底部正好贴在地面线上 */
   function updateAnchors() {
     if (!runnerBounds.length) return;
-    let maxBottom = 0;
-    for (const b of runnerBounds) maxBottom = Math.max(maxBottom, b.vy + b.vh);
-    groundAnchorY = GROUND - (maxBottom / runnerFH) * playerH;
+    const rb = runnerBounds[runFrame] || runnerBounds[0];
+    groundAnchorY = GROUND - ((rb.vy + rb.vh) / runnerFH) * playerH;
     anchorsReady = true;
   }
 
@@ -206,6 +205,9 @@
     if (player.grounded) {
       const animSpeed = Math.max(3, Math.round(12 - speed * 0.6));
       runFrame = Math.floor(frame / animSpeed) % (RUNNER_COLS * RUNNER_ROWS);
+      /* 逐帧贴地：当前帧贴图底部正好压在地面线上 */
+      const rb = runnerBounds[runFrame];
+      if (rb) groundAnchorY = GROUND - ((rb.vy + rb.vh) / runnerFH) * playerH;
     }
 
     /* 角色碰撞箱（按贴图可见像素） */
