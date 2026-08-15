@@ -1,4 +1,5 @@
-/* 跳跃障碍小游戏：角色动图按 8x4 网格切帧播放，障碍按 4x2 网格，黑底 */
+/* 跳跃障碍小游戏：仿 Chrome 小恐龙
+   角色/障碍都按贴图可见像素贴地，速度随分数增长，障碍间距随机 */
 (function () {
   const canvas = document.getElementById("game-canvas");
   if (!canvas) return;
@@ -17,10 +18,10 @@
   const OB_COLS = 4;
   const OB_ROWS = 2;
   const SCALE = 2.8; /* 放大显示倍数 */
-  const JUMP_VY = -10;
-  const GRAVITY = 0.62;
-  const HOLD_GRAVITY = 0.30; /* 按住时重力变小，跳得更高更久 */
-  const MAX_HOLD = 55;       /* 按住最多生效的帧数，防止无限飘 */
+  const JUMP_VY = -9.5;
+  const GRAVITY = 0.55;
+  const HOLD_GRAVITY = 0.26; /* 按住时重力变小，跳得更高更久 */
+  const MAX_HOLD = 60;       /* 按住最多生效的帧数，防止无限飘 */
 
   const runnerImg = new Image();
   runnerImg.src = "assets/runner.png";
@@ -30,6 +31,11 @@
   /* 帧尺寸（按图实际尺寸均分） */
   let runnerFW = 40, runnerFH = 56;
   let obFW = 40, obFH = 56;
+  let runnerBounds = []; /* 角色每帧贴图的可见像素范围 */
+  let obBounds = [];     /* 障碍每帧贴图的可见像素范围 */
+  let groundAnchorY = GROUND - 156.8; /* 角色可见底部贴地时的 y */
+  let anchorsReady = false;
+
   function frameSizes() {
     if (runnerImg.naturalWidth) {
       runnerFW = runnerImg.naturalWidth / RUNNER_COLS;
@@ -41,23 +47,23 @@
     }
   }
 
-  /* 计算每个障碍帧的可见像素范围，碰撞箱贴合贴图 */
-  function computeObBounds() {
-    if (!obstacleImg.naturalWidth) return;
-    try {
+  /* 计算图片每个网格帧的可见像素范围（贴图本身的边界） */
+  function computeBounds() {
+    if (!obstacleImg.naturalWidth || !runnerImg.naturalWidth) return;
+    const measure = (img, cols, rows, fw, fh) => {
       const c = document.createElement("canvas");
-      c.width = obstacleImg.naturalWidth;
-      c.height = obstacleImg.naturalHeight;
+      c.width = img.naturalWidth;
+      c.height = img.naturalHeight;
       const cx = c.getContext("2d");
-      cx.drawImage(obstacleImg, 0, 0);
+      cx.drawImage(img, 0, 0);
       const { data } = cx.getImageData(0, 0, c.width, c.height);
       const w = c.width, h = c.height;
-      obBounds = [];
-      for (let r = 0; r < OB_ROWS; r++) {
-        for (let col = 0; col < OB_COLS; col++) {
-          const x0c = Math.floor(col * obFW), x1c = Math.floor((col + 1) * obFW);
-          const y0c = Math.floor(r * obFH), y1c = Math.floor((r + 1) * obFH);
-          let vx = obFW, vy = obFH, vx1 = -1, vy1 = -1;
+      const arr = [];
+      for (let r = 0; r < rows; r++) {
+        for (let col = 0; col < cols; col++) {
+          const x0c = Math.floor(col * fw), x1c = Math.floor((col + 1) * fw);
+          const y0c = Math.floor(r * fh), y1c = Math.floor((r + 1) * fh);
+          let vx = fw, vy = fh, vx1 = -1, vy1 = -1;
           for (let y = y0c; y < y1c; y++) {
             for (let x = x0c; x < x1c; x++) {
               if (data[(y * w + x) * 4 + 3] > 30) {
@@ -69,29 +75,42 @@
               }
             }
           }
-          obBounds.push({ vx, vy, vw: vx1 - vx + 1, vh: vy1 - vy + 1 });
+          arr.push({ vx, vy, vw: vx1 - vx + 1, vh: vy1 - vy + 1 });
         }
       }
+      return arr;
+    };
+    try {
+      runnerBounds = measure(runnerImg, RUNNER_COLS, RUNNER_ROWS, runnerFW, runnerFH);
+      obBounds = measure(obstacleImg, OB_COLS, OB_ROWS, obFW, obFH);
     } catch (e) {
       /* file:// 等跨域环境：回退为整格内缩 15% */
-      obBounds = Array.from({ length: OB_COLS * OB_ROWS }, () => ({
-        vx: obFW * 0.15, vy: obFH * 0.15, vw: obFW * 0.7, vh: obFH * 0.7
-      }));
+      const fb = (fw, fh) => ({ vx: fw * 0.15, vy: fh * 0.15, vw: fw * 0.7, vh: fh * 0.7 });
+      runnerBounds = Array.from({ length: RUNNER_COLS * RUNNER_ROWS }, () => fb(runnerFW, runnerFH));
+      obBounds = Array.from({ length: OB_COLS * OB_ROWS }, () => fb(obFW, obFH));
     }
+  }
+
+  /* 让角色可见底部正好贴在地面线上 */
+  function updateAnchors() {
+    if (!runnerBounds.length) return;
+    let maxBottom = 0;
+    for (const b of runnerBounds) maxBottom = Math.max(maxBottom, b.vy + b.vh);
+    groundAnchorY = GROUND - (maxBottom / runnerFH) * playerH;
+    anchorsReady = true;
   }
 
   const playerW = runnerFW * SCALE;
   const playerH = runnerFH * SCALE;
-  const player = { x: 64, y: GROUND - playerH, vy: 0, grounded: true };
+  const player = { x: 64, y: groundAnchorY, vy: 0, grounded: true };
 
   let obstacles = [];
-  let obBounds = []; /* 每个障碍帧贴图的可见像素范围（碰撞箱用） */
   let speed = 3.0;
   let score = 0;
   let best = 0;
   let over = false;
   let frame = 0;
-  let spawnTimer = 70;
+  let spawnTimer = 60;
   let runFrame = 0;
   let holding = false;
   let holdFrames = 0;
@@ -114,14 +133,14 @@
   };
 
   function reset() {
-    player.y = GROUND - playerH;
+    player.y = groundAnchorY;
     player.vy = 0;
     player.grounded = true;
     obstacles = [];
     speed = 3.0;
     score = 0;
     over = false;
-    spawnTimer = 70;
+    spawnTimer = 60;
     runFrame = 0;
     holding = false;
     holdFrames = 0;
@@ -147,58 +166,65 @@
     if (over) return;
     frame++;
     frameSizes();
-    if (!obBounds.length) computeObBounds();
+    if (!obBounds.length || !runnerBounds.length) computeBounds();
+    if (runnerBounds.length && !anchorsReady) updateAnchors();
 
     const g = (holding && player.vy < 0 && holdFrames < MAX_HOLD) ? HOLD_GRAVITY : GRAVITY;
     if (holding) holdFrames++;
     if (holdFrames >= MAX_HOLD) holding = false;
     player.vy += g;
     player.y += player.vy;
-    if (player.y >= GROUND - playerH) {
-      player.y = GROUND - playerH;
+    if (player.y >= groundAnchorY) {
+      player.y = groundAnchorY;
       player.vy = 0;
       player.grounded = true;
       holding = false;
       holdFrames = 0;
     }
+
     spawnTimer--;
     if (spawnTimer <= 0) {
-      const h = 65 + Math.random() * 45;
+      const h = 80 + Math.random() * 60;
+      const fi = Math.floor(Math.random() * (OB_COLS * OB_ROWS));
+      const b = obBounds[fi] || { vx: 4, vy: 5, vw: obFW - 8, vh: obFH - 10 };
       obstacles.push({
-        x: canvas.width + 20,
+        x: canvas.width + 20 + Math.random() * 80,
         h,
         w: h * (obFW / obFH),
-        fi: Math.floor(Math.random() * (OB_COLS * OB_ROWS))
+        fi,
+        anchorY: GROUND - ((b.vy + b.vh) / obFH) * h
       });
       window.__gameDebug.lastObstacleH = Math.round(h);
-      spawnTimer = 60 + Math.random() * 55;
+      spawnTimer = 45 + Math.random() * 115;
     }
     obstacles.forEach(o => { o.x -= speed; });
     obstacles = obstacles.filter(o => o.x + o.w > -40);
     score += 0.1;
-    speed = 3.0 + score / 350;
+    speed = Math.min(13, 3.0 + score / 80); /* 速度随分数明显增长 */
 
     /* 只有落地时才推进跑步动画帧；腾空时暂停 */
     if (player.grounded) {
-      const animSpeed = Math.max(3, Math.round(12 - speed * 0.8));
+      const animSpeed = Math.max(3, Math.round(12 - speed * 0.6));
       runFrame = Math.floor(frame / animSpeed) % (RUNNER_COLS * RUNNER_ROWS);
     }
-    window.__gameDebug.grounded = player.grounded;
-    window.__gameDebug.runFrame = runFrame;
-    window.__gameDebug.y = Math.round(player.y);
-    window.__gameDebug.holding = holding;
-    window.__gameDebug.frame = frame;
-    window.__gameDebug.speed = +speed.toFixed(2);
-    window.__gameDebug.obBounds = obBounds.length ? obBounds[0] : null;
 
-    const pr = { x: player.x + 12, y: player.y + 14, w: playerW - 24, h: playerH - 26 };
+    /* 角色碰撞箱（按贴图可见像素） */
+    const rb = runnerBounds[runFrame] || { vx: runnerFW * 0.15, vy: runnerFH * 0.15, vw: runnerFW * 0.7, vh: runnerFH * 0.7 };
+    const sxP = playerW / runnerFW;
+    const syP = playerH / runnerFH;
+    const pr = {
+      x: player.x + rb.vx * sxP + 1,
+      y: player.y + rb.vy * syP + 1,
+      w: Math.max(2, rb.vw * sxP - 2),
+      h: Math.max(2, rb.vh * syP - 2)
+    };
     for (const o of obstacles) {
       const b = obBounds[o.fi] || { vx: 4, vy: 5, vw: obFW - 8, vh: obFH - 10 };
       const sx = o.w / obFW;
       const sy = o.h / obFH;
       const or = {
         x: o.x + b.vx * sx + 1,
-        y: GROUND - o.h + b.vy * sy + 1,
+        y: o.anchorY + b.vy * sy + 1,
         w: Math.max(2, b.vw * sx - 2),
         h: Math.max(2, b.vh * sy - 2)
       };
@@ -214,7 +240,24 @@
         return;
       }
     }
+
     scoreEl.textContent = String(Math.floor(score));
+
+    /* 调试信息 */
+    window.__gameDebug.grounded = player.grounded;
+    window.__gameDebug.runFrame = runFrame;
+    window.__gameDebug.y = Math.round(player.y);
+    window.__gameDebug.holding = holding;
+    window.__gameDebug.frame = frame;
+    window.__gameDebug.speed = +speed.toFixed(2);
+    window.__gameDebug.groundAnchorY = Math.round(groundAnchorY);
+    window.__gameDebug.playerVisibleBottom = Math.round(player.y + (rb.vy + rb.vh) * syP);
+    window.__gameDebug.obBounds = obBounds.length ? obBounds[0] : null;
+    if (obstacles.length) {
+      const o = obstacles[0];
+      const b = obBounds[o.fi] || { vx: 4, vy: 5, vw: obFW - 8, vh: obFH - 10 };
+      window.__gameDebug.obVisibleBottom = Math.round(o.anchorY + (b.vy + b.vh) * (o.h / obFH));
+    }
   }
 
   function draw() {
@@ -227,20 +270,23 @@
       ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
       ctx.fill();
     }
-    /* 地面 */
-    ctx.fillStyle = "#555";
-    ctx.fillRect(0, GROUND, canvas.width, 2);
+    /* 移动的地面虚线（仿小恐龙） */
+    ctx.fillStyle = "#666";
+    const off = Math.floor(frame * speed) % 28;
+    for (let x = -off; x < canvas.width; x += 28) {
+      ctx.fillRect(x, GROUND, 14, 2);
+    }
 
     /* 障碍（4x2 网格切帧，每个障碍随机取一帧，不播放） */
     if (obstacleImg.naturalWidth) {
       for (const o of obstacles) {
         const obRow = Math.floor(o.fi / OB_COLS);
         const obCol = o.fi % OB_COLS;
-        ctx.drawImage(obstacleImg, obCol * obFW, obRow * obFH, obFW, obFH, o.x, GROUND - o.h, o.w, o.h);
+        ctx.drawImage(obstacleImg, obCol * obFW, obRow * obFH, obFW, obFH, o.x, o.anchorY, o.w, o.h);
       }
     }
 
-    /* 角色（8x4 网格切帧，32 帧循环播放，随速度加快） */
+    /* 角色（8x4 网格切帧，32 帧循环播放） */
     if (runnerImg.naturalWidth) {
       const row = Math.floor(runFrame / RUNNER_COLS);
       const col = runFrame % RUNNER_COLS;
@@ -276,5 +322,7 @@
 
   reset();
   frameSizes();
+  computeBounds();
+  updateAnchors();
   loop();
 })();
