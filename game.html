@@ -282,8 +282,6 @@
     let holding = false;
     let holdFrames = 0;
     let bgOffset = 0;
-    let finishX = FINISH_X;
-    let finishOffsetReady = false;
 
     const stars = [];
     for (let i = 0; i < 30; i++) {
@@ -378,14 +376,6 @@
       return { fi: o.fi, b, sx: o.w / obFW, sy: o.h / obFH, anchorY: GROUND - ((b.vy + b.vh) / obFH) * o.h };
     }
 
-    /* 终点角色初始位置：音乐结束时正好滚到右侧对称点 */
-    function updateFinishOffset() {
-      if (finishOffsetReady || !started || !isFinite(bgm.duration)) return;
-      const T = bgm.duration;
-      finishX = FINISH_X + (3 * T + 0.025 * T * T); /* ∫速度 = 3T + 0.025T² */
-      finishOffsetReady = true;
-    }
-
     function update(dt) {
       if (over || !started) return;
       frame += dt;
@@ -422,8 +412,6 @@
       animatedObstacle = musicTime >= OB2_SWITCH_TIME;
       speed = Math.min(13, 3.0 + musicTime * 0.05);
       bgOffset += speed * 0.08 * dt;
-      updateFinishOffset();
-      finishX -= speed * dt;
       scoreEl.textContent = fmtTime(musicTime) + " / " + (isFinite(bgm.duration) ? fmtTime(bgm.duration) : "--:--");
 
       if (!introFall) {
@@ -487,7 +475,6 @@
       window.__gameDebug.frame = +frame.toFixed(1);
       window.__gameDebug.speed = +speed.toFixed(2);
       window.__gameDebug.bgOffset = +bgOffset.toFixed(2);
-      window.__gameDebug.finishX = Math.round(finishX);
       window.__gameDebug.musicTime = +musicTime.toFixed(2);
       window.__gameDebug.animatedObstacle = animatedObstacle;
       window.__gameDebug.introFall = introFall;
@@ -522,11 +509,6 @@
       }
       ctx.fillStyle = "#666";
       ctx.fillRect(0, GROUND, canvas.width, 2);
-
-      /* 终点角色：随世界滚动，音乐结束时停在右侧 */
-      if (finishImg.naturalWidth) {
-        ctx.drawImage(finishImg, finishX, groundAnchorY, FINISH_W, FINISH_H);
-      }
 
       /* 障碍：普通随机帧 / 音乐 2:22.22 后的 l_01 动画（每行一种，按列播放） */
       if (!victory) {
@@ -564,6 +546,10 @@
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText("恭喜通過", canvas.width / 2, 140);
+        /* 终点角色：时间到了才在右侧出现 */
+        if (finishImg.naturalWidth) {
+          ctx.drawImage(finishImg, FINISH_X, groundAnchorY, FINISH_W, FINISH_H);
+        }
         window.__gameDebug.victoryFrame = Math.floor(victoryFrame / 8);
       }
 
