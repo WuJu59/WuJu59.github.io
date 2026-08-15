@@ -3,81 +3,100 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>跳跃障碍小游戏</title>
+  <title>恐龙巴快跑</title>
   <style>
     /* 纯黑极简页面 */
     body { margin: 0; background: #000; }
 
-    /* 白色正方形游戏框：固定在底部约 1/4 处，上方留空 */
+    /* 5px 白色正方形方框，页面正中间 */
     #game-box {
       position: fixed;
+      top: 50%;
       left: 50%;
-      bottom: 3vh;
-      transform: translateX(-50%);
-      width: min(28vmin, 320px);
+      transform: translate(-50%, -50%);
+      width: min(92vw, 520px);
       aspect-ratio: 1;
-      background: #fff;
-      border-radius: 10px;
-      box-sizing: border-box;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    #score-row {
-      display: flex;
-      gap: 18px;
-      font-family: Consolas, "Courier New", monospace;
-      font-size: 13px;
-      color: #000;
-      margin-bottom: 6px;
-    }
-    #game-canvas {
-      width: 100%;
-      flex: 1;
-      min-height: 0;
-      object-fit: contain;
+      border: 5px solid #fff;
       background: #000;
+      overflow: hidden;
+    }
+
+    /* 画布撑满整个方框 */
+    #game-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
       display: block;
       touch-action: none;
       cursor: pointer;
     }
+
+    /* 分数：方框顶部居中 */
+    #score-row {
+      position: absolute;
+      top: 1.5%;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      color: #fff;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* 开始/音量：方框内、地面线下方 */
     #controls {
-      margin-top: 6px;
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 2%;
       display: flex;
+      justify-content: center;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+      z-index: 2;
     }
     #game-start {
-      padding: 6px 16px;
-      background: #000;
-      color: #fff;
+      padding: 8px 20px;
+      background: #fff;
+      color: #000;
       border: none;
       border-radius: 6px;
       cursor: pointer;
       font: inherit;
+      font-weight: bold;
     }
-    #game-state { font-size: 12px; color: #333; }
     #mute-btn {
-      background: none;
+      background: #fff;
+      color: #000;
       border: none;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 14px;
-      padding: 2px;
+      font-size: 15px;
+      padding: 6px 10px;
+    }
+    #game-state {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 11%;
+      text-align: center;
+      font-size: 12px;
+      color: #aaa;
+      z-index: 2;
+      pointer-events: none;
     }
   </style>
 </head>
 <body>
   <div id="game-box">
-    <div id="score-row">
-      <span>分数：<b id="game-score">0</b></span>
-      <span>最高分：<b id="game-best">0</b></span>
-    </div>
-    <canvas id="game-canvas" width="960" height="360" aria-label="跳跃障碍小游戏"></canvas>
+    <canvas id="game-canvas" width="480" height="480" aria-label="跳跃障碍小游戏"></canvas>
+    <div id="score-row">分数：<b id="game-score">0</b> &nbsp;·&nbsp; 最高分：<b id="game-best">0</b></div>
+    <p id="game-state">空格 / 点击跳跃 · 按住跳更高</p>
     <div id="controls">
       <button type="button" id="game-start">开始游戏</button>
-      <span id="game-state">按空格 / 点击跳跃</span>
       <button type="button" id="mute-btn" title="背景音乐开关">🔊</button>
     </div>
   </div>
@@ -94,19 +113,18 @@
     const startBtn = document.getElementById("game-start");
     const muteBtn = document.getElementById("mute-btn");
 
-    /* 背景音乐：开始游戏后播放 */
     const bgm = new Audio("assets/background-music.wav");
     bgm.loop = true;
     bgm.preload = "none";
     let musicStarted = false;
 
-    canvas.width = 960;
-    canvas.height = 360;
-    const GROUND = 305;
+    canvas.width = 480;
+    canvas.height = 480;
+    const GROUND = 400; /* 地面线：方框上方约 5/6 处，下方留给按钮 */
 
     const RUNNER_COLS = 8, RUNNER_ROWS = 4;
     const OB_COLS = 4, OB_ROWS = 2;
-    const SCALE = 2.8;
+    const SCALE = 2.0;
     const JUMP_VY = -9.5;
     const GRAVITY = 0.55;
     const HOLD_GRAVITY = 0.26;
@@ -119,7 +137,7 @@
 
     let runnerFW = 40, runnerFH = 56, obFW = 40, obFH = 56;
     let runnerBounds = [], obBounds = [];
-    let groundAnchorY = GROUND - 156.8;
+    let groundAnchorY = GROUND - 112;
     let anchorsReady = false;
 
     function frameSizes() {
@@ -200,8 +218,8 @@
     let holdFrames = 0;
 
     const stars = [];
-    for (let i = 0; i < 26; i++) {
-      stars.push({ x: Math.random() * canvas.width, y: Math.random() * (canvas.height * 0.55), r: 1 + Math.random() * 1.5 });
+    for (let i = 0; i < 30; i++) {
+      stars.push({ x: Math.random() * canvas.width, y: Math.random() * (GROUND * 0.8), r: 1 + Math.random() * 1.5 });
     }
 
     try { best = Number(localStorage.getItem("wuju59-game-best")) || 0; } catch (e) { /* 忽略 */ }
@@ -227,7 +245,7 @@
       runFrame = 0;
       holding = false;
       holdFrames = 0;
-      stateEl.textContent = "按空格 / 点击跳跃";
+      stateEl.textContent = "空格 / 点击跳跃 · 按住跳更高";
       scoreEl.textContent = "0";
     }
 
@@ -280,7 +298,7 @@
 
       spawnTimer -= dt;
       if (spawnTimer <= 0) {
-        const h = 80 + Math.random() * 60;
+        const h = 70 + Math.random() * 60;
         const fi = Math.floor(Math.random() * (OB_COLS * OB_ROWS));
         const b = obBounds[fi] || { vx: 4, vy: 5, vw: obFW - 8, vh: obFH - 10 };
         obstacles.push({
@@ -365,6 +383,9 @@
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
         ctx.fill();
       }
+      /* 地面：线以下填充深色，作为按钮区域 */
+      ctx.fillStyle = "#111";
+      ctx.fillRect(0, GROUND, canvas.width, canvas.height - GROUND);
       ctx.fillStyle = "#666";
       ctx.fillRect(0, GROUND, canvas.width, 2);
 
