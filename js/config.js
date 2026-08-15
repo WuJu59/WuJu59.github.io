@@ -4,7 +4,7 @@ const SITE = {
   tagline: "",
   status: "在线",
   since: "2026.08.12",
-  version: "v0.30",
+  version: "v0.31",
   email: "",
   adminPassword: "j12345678"
 };

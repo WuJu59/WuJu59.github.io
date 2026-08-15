@@ -356,7 +356,7 @@
     }
 
     function update(dt) {
-      if (over || victory || !started) return;
+      if (over || !started) return;
       frame += dt;
       frameSizes();
       if (!obBounds.length || !runnerBounds.length || !ob2Bounds.length) computeBounds();
@@ -490,23 +490,27 @@
       ctx.fillRect(0, GROUND, canvas.width, 2);
 
       /* 障碍：普通随机帧 / 音乐 2:22.22 后的 l_01 动画（每行一种，按列播放） */
-      for (const o of obstacles) {
-        const info = obInfo(o);
-        if (o.sheet === 1) {
-          const row = Math.floor(info.fi / OB2_COLS);
-          const col = info.fi % OB2_COLS;
-          ctx.drawImage(obstacleAnimImg, col * ob2FW, row * ob2FH, ob2FW, ob2FH, o.x, info.anchorY, o.w, o.h);
-        } else {
-          const obRow = Math.floor(info.fi / OB_COLS);
-          const obCol = info.fi % OB_COLS;
-          ctx.drawImage(obstacleImg, obCol * obFW, obRow * obFH, obFW, obFH, o.x, info.anchorY, o.w, o.h);
+      if (!victory) {
+        for (const o of obstacles) {
+          const info = obInfo(o);
+          if (o.sheet === 1) {
+            const row = Math.floor(info.fi / OB2_COLS);
+            const col = info.fi % OB2_COLS;
+            ctx.drawImage(obstacleAnimImg, col * ob2FW, row * ob2FH, ob2FW, ob2FH, o.x, info.anchorY, o.w, o.h);
+          } else {
+            const obRow = Math.floor(info.fi / OB_COLS);
+            const obCol = info.fi % OB_COLS;
+            ctx.drawImage(obstacleImg, obCol * obFW, obRow * obFH, obFW, obFH, o.x, info.anchorY, o.w, o.h);
+          }
         }
       }
 
       if (runnerImg.naturalWidth) {
-        const row = Math.floor(runFrame / RUNNER_COLS);
-        const col = runFrame % RUNNER_COLS;
-        ctx.drawImage(runnerImg, col * runnerFW, row * runnerFH, runnerFW, runnerFH, player.x, player.y, playerW, playerH);
+        if (!victory) {
+          const row = Math.floor(runFrame / RUNNER_COLS);
+          const col = runFrame % RUNNER_COLS;
+          ctx.drawImage(runnerImg, col * runnerFW, row * runnerFH, runnerFW, runnerFH, player.x, player.y, playerW, playerH);
+        }
       }
 
       /* 胜利动画：h_04，居中播放 */
