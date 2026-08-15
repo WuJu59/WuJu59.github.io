@@ -51,7 +51,6 @@
       left: 0;
       right: 0;
       text-align: center;
-      font-family: Consolas, "Courier New", monospace;
       font-size: 13px;
       color: #fff;
       z-index: 2;
@@ -107,17 +106,17 @@
 <body>
   <div id="game-box">
     <canvas id="game-canvas" width="480" height="480" aria-label="恐龙巴快跑"></canvas>
-    <div id="score-row">分数：<b id="game-score">0:00 / --:--</b> &nbsp;·&nbsp; 最长：<b id="game-best">0:00</b></div>
+    <div id="score-row"><b id="game-score">0:00 / --:--</b></div>
     <div id="controls">
       <button type="button" id="back-btn" title="返回" aria-label="返回">
         <svg width="22" height="22" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
-          <rect x="1" y="7" width="10" height="2" fill="#fff"></rect>
-          <rect x="5" y="5" width="2" height="2" fill="#fff"></rect>
-          <rect x="7" y="3" width="2" height="2" fill="#fff"></rect>
-          <rect x="9" y="1" width="2" height="2" fill="#fff"></rect>
-          <rect x="9" y="13" width="2" height="2" fill="#fff"></rect>
-          <rect x="7" y="11" width="2" height="2" fill="#fff"></rect>
-          <rect x="5" y="9" width="2" height="2" fill="#fff"></rect>
+          <rect x="10" y="1" width="2" height="2" fill="#fff"></rect>
+          <rect x="8" y="3" width="2" height="2" fill="#fff"></rect>
+          <rect x="6" y="5" width="2" height="2" fill="#fff"></rect>
+          <rect x="4" y="7" width="2" height="2" fill="#fff"></rect>
+          <rect x="6" y="9" width="2" height="2" fill="#fff"></rect>
+          <rect x="8" y="11" width="2" height="2" fill="#fff"></rect>
+          <rect x="10" y="13" width="2" height="2" fill="#fff"></rect>
         </svg>
       </button>
       <button type="button" id="game-start">開始</button>
@@ -130,16 +129,6 @@
           <rect x="9" y="3" width="1" height="10" fill="#fff"></rect>
           <rect x="10" y="1" width="1" height="14" fill="#fff"></rect>
         </svg>
-        <svg id="icon-muted" width="22" height="22" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" hidden>
-          <rect x="1" y="6" width="3" height="4" fill="#888"></rect>
-          <rect x="4" y="5" width="2" height="6" fill="#888"></rect>
-          <rect x="6" y="3" width="2" height="10" fill="#888"></rect>
-          <rect x="9" y="4" width="2" height="2" fill="#888"></rect>
-          <rect x="11" y="6" width="2" height="2" fill="#888"></rect>
-          <rect x="9" y="10" width="2" height="2" fill="#888"></rect>
-          <rect x="11" y="8" width="2" height="2" fill="#888"></rect>
-          <rect x="7" y="8" width="2" height="2" fill="#888"></rect>
-        </svg>
       </button>
     </div>
   </div>
@@ -151,7 +140,6 @@
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     const scoreEl = document.getElementById("game-score");
-    const bestEl = document.getElementById("game-best");
     const startBtn = document.getElementById("game-start");
     const muteBtn = document.getElementById("mute-btn");
 
@@ -267,7 +255,6 @@
 
     let obstacles = [];
     let speed = 3.0;
-    let bestTime = 0;
     let over = false;
     let started = false;
     let introFall = false;   /* 开始/重开时人物从上方掉下来 */
@@ -284,12 +271,6 @@
     for (let i = 0; i < 30; i++) {
       stars.push({ x: Math.random() * canvas.width, y: Math.random() * (GROUND * 0.8), r: 1 + Math.random() * 1.5 });
     }
-
-    try {
-      const t = Number(localStorage.getItem("wuju59-game-best"));
-      if (t > 0) bestTime = t;
-    } catch (e) { /* 忽略 */ }
-    bestEl.textContent = fmtTime(bestTime);
 
     window.__gameDebug = {
       frameCount: RUNNER_COLS * RUNNER_ROWS,
@@ -439,11 +420,6 @@
         if (pr.x < or.x + or.w && pr.x + pr.w > or.x && pr.y < or.y + or.h && pr.y + pr.h > or.y) {
           over = true;
           bgm.pause();
-          if (musicTime > bestTime) {
-            bestTime = musicTime;
-            bestEl.textContent = fmtTime(bestTime);
-            try { localStorage.setItem("wuju59-game-best", String(bestTime)); } catch (e) { /* 忽略 */ }
-          }
           startBtn.textContent = "再開";
           window.__gameDebug.musicPaused = true;
           window.__gameDebug.over = true;
@@ -529,11 +505,32 @@
     window.addEventListener("blur", releaseJump);
 
     startBtn.addEventListener("click", startGame);
+    const MUTE_ON = '<svg width="22" height="22" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">' +
+      '<rect x="1" y="6" width="3" height="4" fill="#fff"></rect>' +
+      '<rect x="4" y="5" width="2" height="6" fill="#fff"></rect>' +
+      '<rect x="6" y="3" width="2" height="10" fill="#fff"></rect>' +
+      '<rect x="8" y="5" width="1" height="6" fill="#fff"></rect>' +
+      '<rect x="9" y="3" width="1" height="10" fill="#fff"></rect>' +
+      '<rect x="10" y="1" width="1" height="14" fill="#fff"></rect>' +
+      '</svg>';
+    const MUTE_OFF = '<svg width="22" height="22" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">' +
+      '<rect x="1" y="6" width="3" height="4" fill="#888"></rect>' +
+      '<rect x="4" y="5" width="2" height="6" fill="#888"></rect>' +
+      '<rect x="6" y="3" width="2" height="10" fill="#888"></rect>' +
+      '<rect x="9" y="4" width="2" height="2" fill="#888"></rect>' +
+      '<rect x="11" y="6" width="2" height="2" fill="#888"></rect>' +
+      '<rect x="9" y="10" width="2" height="2" fill="#888"></rect>' +
+      '<rect x="11" y="8" width="2" height="2" fill="#888"></rect>' +
+      '<rect x="7" y="8" width="2" height="2" fill="#888"></rect>' +
+      '</svg>';
+    function renderMute() {
+      muteBtn.innerHTML = bgm.muted ? MUTE_OFF : MUTE_ON;
+    }
     muteBtn.addEventListener("click", () => {
       bgm.muted = !bgm.muted;
-      document.getElementById("icon-sound").hidden = bgm.muted;
-      document.getElementById("icon-muted").hidden = !bgm.muted;
+      renderMute();
     });
+    renderMute();
 
     reset();
     frameSizes();
