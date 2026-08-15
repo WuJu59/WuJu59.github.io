@@ -1,7 +1,4 @@
-const SEED = [
-  { q: "你是怎么学会做网站的？", a: "用 vibe coding：我把想法说清楚，AI 帮我写代码，我再慢慢改。像种花一样，先埋种子。", time: "2026-08-12" },
-  { q: "为什么叫 WuJu59Web？", a: "这是我自己起的项目名，没有特别含义，顺口就好。", time: "2026-08-12" }
-];
+const SEED = [];
 const STORE_KEY = "wuju59-askbox-v1";
 
 let questions = [];

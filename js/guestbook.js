@@ -1,6 +1,4 @@
-const SEED = [
-  { nick: "站长", text: "欢迎来到小站！可以留言，也可以画个涂鸦 ✿", time: "2026-08-12 00:00", doodle: "" }
-];
+const SEED = [];
 const STORE_KEY = "wuju59-guestbook-v1";
 
 let entries = [];

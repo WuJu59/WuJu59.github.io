@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>game2</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; text-align: center; }
+    canvas { border: 1px solid #333; margin-top: 20px; background: #fff; display: block; margin-left: auto; margin-right: auto; touch-action: none; }
+    .ctrl { position: fixed; left: 0; right: 0; bottom: 12px; display: flex; justify-content: center; gap: 18px; }
+    .ctrl button {
+      width: 86px; height: 86px; font-size: 28px;
+      border: 1px solid #333; background: #eee; border-radius: 10px;
+      touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+</head>
+<body>
+  <h1>game2</h1>
+  <p id="hint">原游戏是 .exe（HSP），暂时无法在浏览器运行。先用按钮测试手机操控。</p>
+  <canvas id="c" width="480" height="360"></canvas>
+  <div class="ctrl">
+    <button type="button" id="left">◀</button>
+    <button type="button" id="jump">跳</button>
+    <button type="button" id="right">▶</button>
+  </div>
+
+  <script>
+  /* game2 简易操控测试页：方块可左右移动 + 跳跃 */
+  (function () {
+    const c = document.getElementById("c");
+    const ctx = c.getContext("2d");
+    let x = 60, y = 300, vy = 0, grounded = true;
+    let left = false, right = false;
+    const G = 0.55, SPEED = 4;
+
+    function loop() {
+      if (left) x -= SPEED;
+      if (right) x += SPEED;
+      x = Math.max(10, Math.min(c.width - 30, x));
+      vy += G;
+      y += vy;
+      if (y >= 300) { y = 300; vy = 0; grounded = true; }
+      ctx.clearRect(0, 0, c.width, c.height);
+      ctx.fillStyle = "#666";
+      ctx.fillRect(0, 306, c.width, 2);
+      ctx.fillStyle = "#333";
+      ctx.fillRect(x, y, 30, 30);
+      requestAnimationFrame(loop);
+    }
+
+    function jump() {
+      if (grounded) { vy = -9; grounded = false; }
+    }
+
+    function bind(id, on, off) {
+      const el = document.getElementById(id);
+      el.addEventListener("pointerdown", (e) => { e.preventDefault(); on(); });
+      el.addEventListener("pointerup", (e) => { e.preventDefault(); if (off) off(); });
+      el.addEventListener("pointercancel", () => { if (off) off(); });
+      el.addEventListener("pointerleave", () => { if (off) off(); });
+    }
+    bind("left", () => { left = true; }, () => { left = false; });
+    bind("right", () => { right = true; }, () => { right = false; });
+    bind("jump", jump);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "ArrowLeft") left = true;
+      if (e.code === "ArrowRight") right = true;
+      if (e.code === "Space" || e.code === "ArrowUp") { e.preventDefault(); jump(); }
+    });
+    document.addEventListener("keyup", (e) => {
+      if (e.code === "ArrowLeft") left = false;
+      if (e.code === "ArrowRight") right = false;
+    });
+
+    loop();
+  })();
+  </script>
+</body>
+</html>

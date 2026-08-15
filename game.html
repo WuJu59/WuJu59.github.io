@@ -148,6 +148,8 @@
     const OB2_COLS = 8, OB2_ROWS = 8;
     /* 音乐播放到 2:22.22 后切换为 l_01 障碍动画（每次播放都重新计时） */
     const OB2_SWITCH_TIME = 142.22;
+    /* h_04 胜利动画：8 列 × 4 行（每格 40×56） */
+    const VIC_COLS = 8, VIC_ROWS = 4;
     const SCALE = 1.6;
     const JUMP_VY = -9.5;
     const GRAVITY = 0.55;
@@ -160,8 +162,11 @@
     obstacleImg.src = "assets/obstacle.png";
     const obstacleAnimImg = new Image();
     obstacleAnimImg.src = "assets/obstacle-animated.png";
+    const victoryImg = new Image();
+    victoryImg.src = "assets/victory.png";
 
     let runnerFW = 40, runnerFH = 56, obFW = 40, obFH = 56, ob2FW = 40, ob2FH = 56;
+    let vicFW = 40, vicFH = 56;
     let runnerBounds = [], obBounds = [], ob2Bounds = [];
     let groundAnchorY = GROUND - 89.6;
     let anchorsReady = false;
@@ -178,6 +183,10 @@
       if (obstacleAnimImg.naturalWidth) {
         ob2FW = obstacleAnimImg.naturalWidth / OB2_COLS;
         ob2FH = obstacleAnimImg.naturalHeight / OB2_ROWS;
+      }
+      if (victoryImg.naturalWidth) {
+        vicFW = victoryImg.naturalWidth / VIC_COLS;
+        vicFH = victoryImg.naturalHeight / VIC_ROWS;
       }
     }
 
@@ -243,6 +252,8 @@
     let started = false;
     let introFall = false;
     let animatedObstacle = false;
+    let victory = false;
+    let victoryFrame = 0;
     let frame = 0;
     let lastTime = performance.now();
     let spawnTimer = 80;
@@ -262,6 +273,7 @@
       playerH: Math.round(playerH),
       obstacleFrames: OB_COLS * OB_ROWS,
       ob2Frames: OB2_COLS * OB2_ROWS,
+      victoryFrames: VIC_COLS * VIC_ROWS,
       seek: (t) => { try { bgm.currentTime = t; } catch (e) { /* 忽略 */ } },
       forceSpawn: () => {
         if (!started) return;
@@ -295,6 +307,8 @@
       holding = false;
       holdFrames = 0;
       animatedObstacle = false;
+      victory = false;
+      victoryFrame = 0;
       scoreEl.textContent = "0:00 / " + (isFinite(bgm.duration) ? fmtTime(bgm.duration) : "--:--");
     }
 
@@ -342,7 +356,7 @@
     }
 
     function update(dt) {
-      if (over || !started) return;
+      if (over || victory || !started) return;
       frame += dt;
       frameSizes();
       if (!obBounds.length || !runnerBounds.length || !ob2Bounds.length) computeBounds();
@@ -363,6 +377,17 @@
       }
 
       const musicTime = started && isFinite(bgm.currentTime) ? bgm.currentTime : 0;
+      /* 音乐播完 = 胜利，播放 h_04 胜利动画 */
+      if (!victory && isFinite(bgm.duration) && musicTime >= bgm.duration - 0.4) {
+        victory = true;
+        bgm.pause();
+        startBtn.textContent = "再開";
+        window.__gameDebug.victory = true;
+      }
+      if (victory) {
+        victoryFrame += dt;
+        return;
+      }
       animatedObstacle = musicTime >= OB2_SWITCH_TIME;
       speed = Math.min(13, 3.0 + musicTime * 0.05);
       bgOffset += speed * 0.08 * dt;
@@ -482,6 +507,18 @@
         const row = Math.floor(runFrame / RUNNER_COLS);
         const col = runFrame % RUNNER_COLS;
         ctx.drawImage(runnerImg, col * runnerFW, row * runnerFH, runnerFW, runnerFH, player.x, player.y, playerW, playerH);
+      }
+
+      /* 胜利动画：h_04，居中播放 */
+      if (victory && victoryImg.naturalWidth) {
+        const idx = Math.floor(victoryFrame / 8) % (VIC_COLS * VIC_ROWS);
+        const row = Math.floor(idx / VIC_COLS);
+        const col = idx % VIC_COLS;
+        const scale = 2.2;
+        const dw = vicFW * scale, dh = vicFH * scale;
+        ctx.drawImage(victoryImg, col * vicFW, row * vicFH, vicFW, vicFH,
+          (canvas.width - dw) / 2, (canvas.height - dh) / 2, dw, dh);
+        window.__gameDebug.victoryFrame = Math.floor(victoryFrame / 8);
       }
     }
 
