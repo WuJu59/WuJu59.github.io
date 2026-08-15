@@ -56,16 +56,60 @@
       z-index: 2;
       pointer-events: none;
     }
-    #debug-win {
+    #version-tag {
       position: absolute;
       top: 1.5%;
-      right: 1.5%;
+      left: 1.5%;
       z-index: 3;
+      color: #777;
+      font-size: 11px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #about-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(0, 0, 0, 0.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    #about-modal.open { display: flex; }
+    #about-window {
+      position: relative;
+      width: min(88vw, 420px);
+      max-height: 82vh;
+      overflow-y: auto;
+      box-sizing: border-box;
+      background: #000;
+      border: 3px solid #fff;
+      border-radius: 8px;
+      padding: 18px;
+      color: #fff;
+    }
+    #about-window h2 { font-size: 17px; margin: 0 0 8px; }
+    #about-window h3 { font-size: 13px; margin: 14px 0 6px; }
+    #about-window p, #about-window li { font-size: 13px; line-height: 1.7; }
+    #about-window ul { padding-left: 18px; margin: 0; }
+    #about-close {
+      position: absolute;
+      top: 6px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #about-window #debug-win {
+      margin-top: 14px;
       background: rgba(255, 255, 255, 0.12);
       color: #fff;
       border: 1px solid #555;
-      font-size: 10px;
-      padding: 2px 6px;
+      font-size: 11px;
+      padding: 4px 12px;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
@@ -120,7 +164,7 @@
   <div id="game-box">
     <canvas id="game-canvas" width="480" height="480" aria-label="恐龙巴快跑"></canvas>
     <div id="score-row"><b id="game-score">0:00 / --:--</b></div>
-    <button type="button" id="debug-win">DEBUG</button>
+    <span id="version-tag" title="关于">v0.2</span>
     <div id="controls">
       <button type="button" id="back-btn" title="返回" aria-label="返回">
         <svg width="22" height="22" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
@@ -135,6 +179,23 @@
       </button>
       <button type="button" id="game-start">開始</button>
       <button type="button" id="mute-btn" title="背景音乐开关"></button>
+    </div>
+  </div>
+
+  <div id="about-modal">
+    <div id="about-window">
+      <button type="button" id="about-close">×</button>
+      <h2>恐龙巴快跑</h2>
+      <h3>游戏简介</h3>
+      <p>跟着音乐跳跃躲避障碍，撑到音乐播完就通关。</p>
+      <h3>更新公告</h3>
+      <ul>
+        <li>音乐计时（当前 / 总时长）</li>
+        <li>胜利动画与终点角色</li>
+        <li>失败 / 胜利日文汉字提示</li>
+        <li>手机触屏操控</li>
+      </ul>
+      <button type="button" id="debug-win">DEBUG</button>
     </div>
   </div>
 
@@ -526,7 +587,7 @@
         }
       }
 
-      if (runnerImg.naturalWidth) {
+      if (runnerImg.naturalWidth && started) {
         if (!victory) {
           const row = Math.floor(runFrame / RUNNER_COLS);
           const col = runFrame % RUNNER_COLS;
@@ -559,7 +620,7 @@
         ctx.font = "28px MisakiMincho, serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("追付かれた", canvas.width / 2, 140);
+        ctx.fillText("捕まった", canvas.width / 2, 140);
       }
     }
 
@@ -591,6 +652,10 @@
     window.addEventListener("blur", releaseJump);
 
     startBtn.addEventListener("click", startGame);
+    const aboutModal = document.getElementById("about-modal");
+    document.getElementById("version-tag").addEventListener("click", () => { aboutModal.classList.add("open"); });
+    document.getElementById("about-close").addEventListener("click", () => { aboutModal.classList.remove("open"); });
+    aboutModal.addEventListener("click", (e) => { if (e.target === aboutModal) aboutModal.classList.remove("open"); });
     document.getElementById("debug-win").addEventListener("click", () => {
       /* 调试：直接跳到胜利动画 */
       if (!started) startGame();
@@ -601,6 +666,7 @@
       startBtn.textContent = "再開";
       window.__gameDebug.victory = true;
       window.__gameDebug.over = false;
+      aboutModal.classList.remove("open");
     });
     const MUTE_ON = '<svg width="22" height="22" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">' +
       '<rect x="1" y="6" width="3" height="4" fill="#fff"></rect>' +
