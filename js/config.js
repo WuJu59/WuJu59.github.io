@@ -4,7 +4,7 @@ const SITE = {
   tagline: "记录生活 · 收集快乐 · 橘色狂热爱好者",
   status: "在线，欢迎来坐坐",
   since: "2026.08.12",
-  version: "v0.25",
+  version: "v0.26",
   email: "hello@example.com",
   adminPassword: "j12345678"
 };
@@ -21,7 +21,7 @@ const SUPABASE = {
 
 /* 入口页公告：想改公告内容就改这里 */
 const ANNOUNCEMENTS = [
-  { tag: "v0.25", title: "版本更新", text: "恐龙巴快跑：日文漢字按钮、像素图标、背景缓慢移动。" },
+  { tag: "v0.26", title: "版本更新", text: "恐龙巴快跑：地面只留实线、修障碍穿地、星星持续移动、后半段换 l_01 动图。" },
   { tag: "彩蛋", title: "神秘方框", text: "首页中间那个方框，以后会藏一个彩蛋，敬请期待。" },
   { tag: "关于", title: "关于本站", text: "五九的小站：纯 HTML/CSS/JS 手工打造，零框架、零依赖。" },
   { tag: "提示", title: "使用说明", text: "点击中间方框进入主站；页面底部有管理入口。" }
