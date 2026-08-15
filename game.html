@@ -322,7 +322,7 @@
       let maxBottom = 0;
       for (const b of runnerBounds) maxBottom = Math.max(maxBottom, b.vy + b.vh);
       /* 人物稍微上移 6px，避免视觉上穿地 */
-      groundAnchorY = GROUND - (maxBottom / runnerFH) * playerH - 6;
+      groundAnchorY = GROUND - (maxBottom / runnerFH) * playerH;
       anchorsReady = true;
     }
 
