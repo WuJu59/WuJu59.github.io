@@ -56,6 +56,19 @@
       z-index: 2;
       pointer-events: none;
     }
+    #debug-win {
+      position: absolute;
+      top: 1.5%;
+      right: 1.5%;
+      z-index: 3;
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      border: 1px solid #555;
+      font-size: 10px;
+      padding: 2px 6px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
 
     #controls {
       position: absolute;
@@ -107,6 +120,7 @@
   <div id="game-box">
     <canvas id="game-canvas" width="480" height="480" aria-label="恐龙巴快跑"></canvas>
     <div id="score-row"><b id="game-score">0:00 / --:--</b></div>
+    <button type="button" id="debug-win">DEBUG</button>
     <div id="controls">
       <button type="button" id="back-btn" title="返回" aria-label="返回">
         <svg width="22" height="22" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
@@ -489,8 +503,12 @@
       ctx.fillStyle = "#666";
       ctx.fillRect(0, GROUND, canvas.width, 2);
 
-      /* 障碍：普通随机帧 / 音乐 2:22.22 后的 l_01 动画（每行一种，按列播放） */
+      /* 障碍 + 角色：地面线以下一律裁剪，杜绝穿地 */
       if (!victory) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, canvas.width, GROUND);
+        ctx.clip();
         for (const o of obstacles) {
           const info = obInfo(o);
           if (o.sheet === 1) {
@@ -503,14 +521,12 @@
             ctx.drawImage(obstacleImg, obCol * obFW, obRow * obFH, obFW, obFH, o.x, info.anchorY, o.w, o.h);
           }
         }
-      }
-
-      if (runnerImg.naturalWidth) {
-        if (!victory) {
+        if (runnerImg.naturalWidth) {
           const row = Math.floor(runFrame / RUNNER_COLS);
           const col = runFrame % RUNNER_COLS;
           ctx.drawImage(runnerImg, col * runnerFW, row * runnerFH, runnerFW, runnerFH, player.x, player.y, playerW, playerH);
         }
+        ctx.restore();
       }
 
       /* 胜利动画：h_04，居中播放 */
@@ -554,6 +570,17 @@
     window.addEventListener("blur", releaseJump);
 
     startBtn.addEventListener("click", startGame);
+    document.getElementById("debug-win").addEventListener("click", () => {
+      /* 调试：直接跳到胜利动画 */
+      if (!started) startGame();
+      over = false;
+      victory = true;
+      victoryFrame = 0;
+      bgm.pause();
+      startBtn.textContent = "再開";
+      window.__gameDebug.victory = true;
+      window.__gameDebug.over = false;
+    });
     const MUTE_ON = '<svg width="22" height="22" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">' +
       '<rect x="1" y="6" width="3" height="4" fill="#fff"></rect>' +
       '<rect x="4" y="5" width="2" height="6" fill="#fff"></rect>' +
