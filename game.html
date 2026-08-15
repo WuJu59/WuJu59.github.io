@@ -10,7 +10,16 @@
       src: url("assets/misaki-mincho.ttf") format("truetype");
     }
     /* 纯黑极简页面 */
-    body { margin: 0; background: #000; font-family: "MisakiMincho", Arial, "Microsoft YaHei", sans-serif; }
+    html, body {
+      margin: 0;
+      background: #000;
+      font-family: "MisakiMincho", Arial, "Microsoft YaHei", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
 
     /* 5px 白色正方形方框，页面正中间 */
     #game-box {
@@ -34,6 +43,9 @@
       display: block;
       touch-action: none;
       cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     /* 分数：方框顶部居中 */
@@ -71,6 +83,7 @@
       cursor: pointer;
       font: inherit;
       font-weight: bold;
+      -webkit-tap-highlight-color: transparent;
     }
     #mute-btn {
       background: #000;
@@ -80,6 +93,7 @@
       cursor: pointer;
       font-size: 15px;
       padding: 6px 10px;
+      -webkit-tap-highlight-color: transparent;
     }
   </style>
 </head>
