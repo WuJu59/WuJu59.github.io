@@ -5,28 +5,81 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>跳跃障碍小游戏</title>
   <style>
-    body { margin: 0; padding: 16px; background: #000; color: #fff; font-family: Arial, "Microsoft YaHei", sans-serif; }
-    #wrap { max-width: 960px; margin: 0 auto; }
-    h1 { font-size: 18px; text-align: center; margin: 8px 0 10px; }
-    #score-row { display: flex; justify-content: center; gap: 28px; font-family: Consolas, "Courier New", monospace; margin: 0 0 10px; }
-    #game-canvas { width: 100%; height: auto; display: block; background: #000; border: 1px solid #333; border-radius: 8px; cursor: pointer; touch-action: none; }
-    #state { text-align: center; margin: 10px 0 6px; font-size: 14px; }
-    .hint { text-align: center; color: #888; font-size: 13px; margin: 0 0 10px; }
-    #game-restart { display: block; margin: 0 auto; padding: 8px 18px; font: inherit; cursor: pointer; border: 1px solid #666; border-radius: 6px; background: #111; color: #fff; }
-    #game-restart:hover { background: #222; }
+    /* 纯黑极简页面 */
+    body { margin: 0; background: #000; }
+
+    /* 白色正方形游戏框：固定在底部约 1/4 处，上方留空 */
+    #game-box {
+      position: fixed;
+      left: 50%;
+      bottom: 3vh;
+      transform: translateX(-50%);
+      width: min(28vmin, 320px);
+      aspect-ratio: 1;
+      background: #fff;
+      border-radius: 10px;
+      box-sizing: border-box;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    #score-row {
+      display: flex;
+      gap: 18px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      color: #000;
+      margin-bottom: 6px;
+    }
+    #game-canvas {
+      width: 100%;
+      flex: 1;
+      min-height: 0;
+      object-fit: contain;
+      background: #000;
+      display: block;
+      touch-action: none;
+      cursor: pointer;
+    }
+    #controls {
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #game-start {
+      padding: 6px 16px;
+      background: #000;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font: inherit;
+    }
+    #game-state { font-size: 12px; color: #333; }
+    #mute-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px;
+    }
   </style>
 </head>
 <body>
-  <div id="wrap">
-    <h1>跳跃障碍</h1>
+  <div id="game-box">
     <div id="score-row">
       <span>分数：<b id="game-score">0</b></span>
       <span>最高分：<b id="game-best">0</b></span>
     </div>
     <canvas id="game-canvas" width="960" height="360" aria-label="跳跃障碍小游戏"></canvas>
-    <p id="game-state">空格 / 点击 跳跃</p>
-    <p class="hint">按住跳得更高 · 空格 / ↑ / 点击画面</p>
-    <button type="button" id="game-restart">重新开始</button>
+    <div id="controls">
+      <button type="button" id="game-start">开始游戏</button>
+      <span id="game-state">按空格 / 点击跳跃</span>
+      <button type="button" id="mute-btn" title="背景音乐开关">🔊</button>
+    </div>
   </div>
 
   <script>
@@ -38,6 +91,14 @@
     const scoreEl = document.getElementById("game-score");
     const bestEl = document.getElementById("game-best");
     const stateEl = document.getElementById("game-state");
+    const startBtn = document.getElementById("game-start");
+    const muteBtn = document.getElementById("mute-btn");
+
+    /* 背景音乐：开始游戏后播放 */
+    const bgm = new Audio("assets/background-music.wav");
+    bgm.loop = true;
+    bgm.preload = "none";
+    let musicStarted = false;
 
     canvas.width = 960;
     canvas.height = 360;
@@ -130,7 +191,8 @@
     let score = 0;
     let best = 0;
     let over = false;
-    let frame = 0;          /* 累计帧（带小数，按真实时间推进） */
+    let started = false;
+    let frame = 0;
     let lastTime = performance.now();
     let spawnTimer = 80;
     let runFrame = 0;
@@ -165,11 +227,24 @@
       runFrame = 0;
       holding = false;
       holdFrames = 0;
-      stateEl.textContent = "空格 / 点击 跳跃";
+      stateEl.textContent = "按空格 / 点击跳跃";
       scoreEl.textContent = "0";
     }
 
+    function startGame() {
+      reset();
+      started = true;
+      startBtn.textContent = "重新开始";
+      if (!musicStarted) {
+        musicStarted = true;
+        bgm.play().catch(() => { /* 浏览器拦截时忽略 */ });
+      }
+      window.__gameDebug.musicAttempted = true;
+      window.__gameDebug.started = true;
+    }
+
     function jump() {
+      if (!started) { startGame(); return; }
       if (over) { reset(); return; }
       if (player.grounded) {
         player.vy = JUMP_VY;
@@ -184,7 +259,7 @@
     }
 
     function update(dt) {
-      if (over) return;
+      if (over || !started) return;
       frame += dt;
       frameSizes();
       if (!obBounds.length || !runnerBounds.length) computeBounds();
@@ -216,7 +291,7 @@
           anchorY: GROUND - ((b.vy + b.vh) / obFH) * h
         });
         window.__gameDebug.lastObstacleH = Math.round(h);
-        spawnTimer = 80 + Math.random() * 140; /* 最小间隔加大，避免过于紧凑 */
+        spawnTimer = 80 + Math.random() * 140;
       }
       obstacles.forEach(o => { o.x -= speed * dt; });
       obstacles = obstacles.filter(o => o.x + o.w > -40);
@@ -257,7 +332,8 @@
             bestEl.textContent = String(best);
             try { localStorage.setItem("wuju59-game-best", String(best)); } catch (e) { /* 忽略 */ }
           }
-          stateEl.textContent = "撞到啦！按空格或点击重新开始";
+          stateEl.textContent = "撞到啦！点击重新开始";
+          startBtn.textContent = "重新开始";
           return;
         }
       }
@@ -289,7 +365,6 @@
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
         ctx.fill();
       }
-      /* 实线地面 */
       ctx.fillStyle = "#666";
       ctx.fillRect(0, GROUND, canvas.width, 2);
 
@@ -334,7 +409,12 @@
     canvas.addEventListener("pointerup", releaseJump);
     canvas.addEventListener("pointercancel", releaseJump);
     window.addEventListener("blur", releaseJump);
-    document.getElementById("game-restart").addEventListener("click", reset);
+
+    startBtn.addEventListener("click", startGame);
+    muteBtn.addEventListener("click", () => {
+      bgm.muted = !bgm.muted;
+      muteBtn.textContent = bgm.muted ? "🔇" : "🔊";
+    });
 
     reset();
     frameSizes();
