@@ -19,8 +19,8 @@
   const SCALE = 2.8; /* 放大显示倍数 */
   const JUMP_VY = -10;
   const GRAVITY = 0.62;
-  const HOLD_GRAVITY = 0.34; /* 按住时重力变小，跳得更高更久 */
-  const MAX_HOLD = 42;       /* 按住最多生效的帧数，防止无限飘 */
+  const HOLD_GRAVITY = 0.30; /* 按住时重力变小，跳得更高更久 */
+  const MAX_HOLD = 55;       /* 按住最多生效的帧数，防止无限飘 */
 
   const runnerImg = new Image();
   runnerImg.src = "assets/runner.png";
@@ -41,12 +41,52 @@
     }
   }
 
-  const playerW = runnerFW * SCALE; /* 80 */
-  const playerH = runnerFH * SCALE; /* 112 */
+  /* 计算每个障碍帧的可见像素范围，碰撞箱贴合贴图 */
+  function computeObBounds() {
+    if (!obstacleImg.naturalWidth) return;
+    try {
+      const c = document.createElement("canvas");
+      c.width = obstacleImg.naturalWidth;
+      c.height = obstacleImg.naturalHeight;
+      const cx = c.getContext("2d");
+      cx.drawImage(obstacleImg, 0, 0);
+      const { data } = cx.getImageData(0, 0, c.width, c.height);
+      const w = c.width, h = c.height;
+      obBounds = [];
+      for (let r = 0; r < OB_ROWS; r++) {
+        for (let col = 0; col < OB_COLS; col++) {
+          const x0c = Math.floor(col * obFW), x1c = Math.floor((col + 1) * obFW);
+          const y0c = Math.floor(r * obFH), y1c = Math.floor((r + 1) * obFH);
+          let vx = obFW, vy = obFH, vx1 = -1, vy1 = -1;
+          for (let y = y0c; y < y1c; y++) {
+            for (let x = x0c; x < x1c; x++) {
+              if (data[(y * w + x) * 4 + 3] > 30) {
+                const lx = x - x0c, ly = y - y0c;
+                if (lx < vx) vx = lx;
+                if (lx > vx1) vx1 = lx;
+                if (ly < vy) vy = ly;
+                if (ly > vy1) vy1 = ly;
+              }
+            }
+          }
+          obBounds.push({ vx, vy, vw: vx1 - vx + 1, vh: vy1 - vy + 1 });
+        }
+      }
+    } catch (e) {
+      /* file:// 等跨域环境：回退为整格内缩 15% */
+      obBounds = Array.from({ length: OB_COLS * OB_ROWS }, () => ({
+        vx: obFW * 0.15, vy: obFH * 0.15, vw: obFW * 0.7, vh: obFH * 0.7
+      }));
+    }
+  }
+
+  const playerW = runnerFW * SCALE;
+  const playerH = runnerFH * SCALE;
   const player = { x: 64, y: GROUND - playerH, vy: 0, grounded: true };
 
   let obstacles = [];
-  let speed = 2.6;
+  let obBounds = []; /* 每个障碍帧贴图的可见像素范围（碰撞箱用） */
+  let speed = 3.0;
   let score = 0;
   let best = 0;
   let over = false;
@@ -78,7 +118,7 @@
     player.vy = 0;
     player.grounded = true;
     obstacles = [];
-    speed = 2.6;
+    speed = 3.0;
     score = 0;
     over = false;
     spawnTimer = 70;
@@ -107,6 +147,7 @@
     if (over) return;
     frame++;
     frameSizes();
+    if (!obBounds.length) computeObBounds();
 
     const g = (holding && player.vy < 0 && holdFrames < MAX_HOLD) ? HOLD_GRAVITY : GRAVITY;
     if (holding) holdFrames++;
@@ -122,7 +163,7 @@
     }
     spawnTimer--;
     if (spawnTimer <= 0) {
-      const h = 55 + Math.random() * 40;
+      const h = 65 + Math.random() * 45;
       obstacles.push({
         x: canvas.width + 20,
         h,
@@ -135,7 +176,7 @@
     obstacles.forEach(o => { o.x -= speed; });
     obstacles = obstacles.filter(o => o.x + o.w > -40);
     score += 0.1;
-    speed = 2.6 + score / 350;
+    speed = 3.0 + score / 350;
 
     /* 只有落地时才推进跑步动画帧；腾空时暂停 */
     if (player.grounded) {
@@ -147,10 +188,20 @@
     window.__gameDebug.y = Math.round(player.y);
     window.__gameDebug.holding = holding;
     window.__gameDebug.frame = frame;
+    window.__gameDebug.speed = +speed.toFixed(2);
+    window.__gameDebug.obBounds = obBounds.length ? obBounds[0] : null;
 
     const pr = { x: player.x + 12, y: player.y + 14, w: playerW - 24, h: playerH - 26 };
     for (const o of obstacles) {
-      const or = { x: o.x + 4, y: GROUND - o.h + 5, w: o.w - 8, h: o.h - 5 };
+      const b = obBounds[o.fi] || { vx: 4, vy: 5, vw: obFW - 8, vh: obFH - 10 };
+      const sx = o.w / obFW;
+      const sy = o.h / obFH;
+      const or = {
+        x: o.x + b.vx * sx + 1,
+        y: GROUND - o.h + b.vy * sy + 1,
+        w: Math.max(2, b.vw * sx - 2),
+        h: Math.max(2, b.vh * sy - 2)
+      };
       if (pr.x < or.x + or.w && pr.x + pr.w > or.x && pr.y < or.y + or.h && pr.y + pr.h > or.y) {
         over = true;
         const s = Math.floor(score);
