@@ -9,7 +9,6 @@
       font-family: "MisakiMincho";
       src: url("assets/misaki-mincho.ttf") format("truetype");
     }
-    /* 纯黑极简页面 */
     html, body {
       margin: 0;
       background: #000;
@@ -21,7 +20,6 @@
       touch-action: manipulation;
     }
 
-    /* 5px 白色正方形方框，页面正中间 */
     #game-box {
       position: fixed;
       top: 50%;
@@ -34,7 +32,6 @@
       overflow: hidden;
     }
 
-    /* 画布撑满整个方框 */
     #game-canvas {
       position: absolute;
       inset: 0;
@@ -48,7 +45,6 @@
       -webkit-user-select: none;
     }
 
-    /* 分数：方框顶部居中 */
     #score-row {
       position: absolute;
       top: 1.5%;
@@ -62,7 +58,6 @@
       pointer-events: none;
     }
 
-    /* 开始/音量：方框内、地面线下方 */
     #controls {
       position: absolute;
       left: 0;
@@ -99,8 +94,8 @@
 </head>
 <body>
   <div id="game-box">
-    <canvas id="game-canvas" width="480" height="480" aria-label="跳跃障碍小游戏"></canvas>
-    <div id="score-row">分数：<b id="game-score">0</b> &nbsp;·&nbsp; 最高分：<b id="game-best">0</b></div>
+    <canvas id="game-canvas" width="480" height="480" aria-label="恐龙巴快跑"></canvas>
+    <div id="score-row">分数：<b id="game-score">0:00 / --:--</b> &nbsp;·&nbsp; 最长：<b id="game-best">0:00</b></div>
     <div id="controls">
       <button type="button" id="game-start">开始游戏</button>
       <button type="button" id="mute-btn" title="背景音乐开关">🔊</button>
@@ -108,7 +103,7 @@
   </div>
 
   <script>
-  /* 跳跃障碍小游戏：仿 Chrome 小恐龙，独立单页（无任何外部依赖） */
+  /* 恐龙巴快跑：仿 Chrome 小恐龙，独立单页（无任何外部依赖） */
   (function () {
     const canvas = document.getElementById("game-canvas");
     if (!canvas) return;
@@ -120,13 +115,18 @@
 
     const bgm = new Audio("assets/background-music.wav");
     bgm.loop = true;
-    bgm.preload = "none";
+    bgm.preload = "metadata";
+
     canvas.width = 480;
     canvas.height = 480;
-    const GROUND = 400; /* 地面线：方框上方约 5/6 处，下方留给按钮 */
+    const GROUND = 400;
 
     const RUNNER_COLS = 8, RUNNER_ROWS = 4;
     const OB_COLS = 4, OB_ROWS = 2;
+    /* I_01 障碍动画：默认 1 列 × 20 行（每行一帧），可按实际修改 */
+    const OB2_COLS = 1, OB2_ROWS = 20;
+    /* 音乐播放到 2:22.22 后切换为 I_01 障碍动画（每次播放都重新计时） */
+    const OB2_SWITCH_TIME = 142.22;
     const SCALE = 1.6;
     const JUMP_VY = -9.5;
     const GRAVITY = 0.55;
@@ -137,10 +137,12 @@
     runnerImg.src = "assets/runner.png";
     const obstacleImg = new Image();
     obstacleImg.src = "assets/obstacle.png";
+    const obstacleAnimImg = new Image();
+    obstacleAnimImg.src = "assets/obstacle-animated.png";
 
-    let runnerFW = 40, runnerFH = 56, obFW = 40, obFH = 56;
-    let runnerBounds = [], obBounds = [];
-    let groundAnchorY = GROUND - 112;
+    let runnerFW = 40, runnerFH = 56, obFW = 40, obFH = 56, ob2FW = 128, ob2FH = 16;
+    let runnerBounds = [], obBounds = [], ob2Bounds = [];
+    let groundAnchorY = GROUND - 89.6;
     let anchorsReady = false;
 
     function frameSizes() {
@@ -152,10 +154,14 @@
         obFW = obstacleImg.naturalWidth / OB_COLS;
         obFH = obstacleImg.naturalHeight / OB_ROWS;
       }
+      if (obstacleAnimImg.naturalWidth) {
+        ob2FW = obstacleAnimImg.naturalWidth / OB2_COLS;
+        ob2FH = obstacleAnimImg.naturalHeight / OB2_ROWS;
+      }
     }
 
     function computeBounds() {
-      if (!obstacleImg.naturalWidth || !runnerImg.naturalWidth) return;
+      if (!obstacleImg.naturalWidth || !runnerImg.naturalWidth || !obstacleAnimImg.naturalWidth) return;
       const measure = (img, cols, rows, fw, fh) => {
         const c = document.createElement("canvas");
         c.width = img.naturalWidth;
@@ -189,16 +195,17 @@
       try {
         runnerBounds = measure(runnerImg, RUNNER_COLS, RUNNER_ROWS, runnerFW, runnerFH);
         obBounds = measure(obstacleImg, OB_COLS, OB_ROWS, obFW, obFH);
+        ob2Bounds = measure(obstacleAnimImg, OB2_COLS, OB2_ROWS, ob2FW, ob2FH);
       } catch (e) {
         const fb = (fw, fh) => ({ vx: fw * 0.15, vy: fh * 0.15, vw: fw * 0.7, vh: fh * 0.7 });
         runnerBounds = Array.from({ length: RUNNER_COLS * RUNNER_ROWS }, () => fb(runnerFW, runnerFH));
         obBounds = Array.from({ length: OB_COLS * OB_ROWS }, () => fb(obFW, obFH));
+        ob2Bounds = Array.from({ length: OB2_COLS * OB2_ROWS }, () => fb(ob2FW, ob2FH));
       }
     }
 
     function updateAnchors() {
       if (!runnerBounds.length) return;
-      /* 单一贴地基准：只让最低的那几帧贴地，保留跳跃姿态动画 */
       let maxBottom = 0;
       for (const b of runnerBounds) maxBottom = Math.max(maxBottom, b.vy + b.vh);
       groundAnchorY = GROUND - (maxBottom / runnerFH) * playerH;
@@ -211,10 +218,11 @@
 
     let obstacles = [];
     let speed = 3.0;
-    let score = 0;
-    let best = 0;
+    let bestTime = 0;
     let over = false;
     let started = false;
+    let introFall = false;   /* 开始/重开时人物从上方掉下来 */
+    let animatedObstacle = false;
     let frame = 0;
     let lastTime = performance.now();
     let spawnTimer = 80;
@@ -227,16 +235,26 @@
       stars.push({ x: Math.random() * canvas.width, y: Math.random() * (GROUND * 0.8), r: 1 + Math.random() * 1.5 });
     }
 
-    try { best = Number(localStorage.getItem("wuju59-game-best")) || 0; } catch (e) { /* 忽略 */ }
-    bestEl.textContent = String(best);
-    scoreEl.textContent = "0";
+    try {
+      const t = Number(localStorage.getItem("wuju59-game-best"));
+      if (t > 0) bestTime = t;
+    } catch (e) { /* 忽略 */ }
+    bestEl.textContent = fmtTime(bestTime);
 
     window.__gameDebug = {
       frameCount: RUNNER_COLS * RUNNER_ROWS,
       playerW: Math.round(playerW),
       playerH: Math.round(playerH),
-      obstacleFrames: OB_COLS * OB_ROWS
+      obstacleFrames: OB_COLS * OB_ROWS,
+      ob2Frames: OB2_COLS * OB2_ROWS,
+      seek: (t) => { try { bgm.currentTime = t; } catch (e) { /* 忽略 */ } }
     };
+
+    function fmtTime(t) {
+      if (!isFinite(t) || t < 0) return "--:--";
+      const s = Math.floor(t);
+      return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+    }
 
     function reset() {
       player.y = groundAnchorY;
@@ -244,20 +262,25 @@
       player.grounded = true;
       obstacles = [];
       speed = 3.0;
-      score = 0;
       over = false;
       spawnTimer = 80;
       runFrame = 0;
       holding = false;
       holdFrames = 0;
-      scoreEl.textContent = "0";
+      animatedObstacle = false;
+      scoreEl.textContent = "0:00 / " + (isFinite(bgm.duration) ? fmtTime(bgm.duration) : "--:--");
     }
 
     function startGame() {
       reset();
       started = true;
+      /* 开始/重开：人物从上方掉到地面 */
+      introFall = true;
+      player.y = groundAnchorY - 500;
+      player.vy = 0;
+      player.grounded = false;
       startBtn.textContent = "重新开始";
-      /* 每次开始/重开都从开头重新播放音乐 */
+      /* 每次播放都从开头重新计时 */
       bgm.currentTime = 0;
       bgm.play().catch(() => { /* 浏览器拦截时忽略 */ });
       window.__gameDebug.musicAttempted = (window.__gameDebug.musicAttempted || 0) + 1;
@@ -266,7 +289,7 @@
     }
 
     function jump() {
-      /* 失败后只能点「重新开始」按钮，空格/点击画面不重启 */
+      /* 只能点「开始游戏/重新开始」按钮开局，空格/点击画面不启动 */
       if (!started || over) return;
       if (player.grounded) {
         player.vy = JUMP_VY;
@@ -284,9 +307,10 @@
       if (over || !started) return;
       frame += dt;
       frameSizes();
-      if (!obBounds.length || !runnerBounds.length) computeBounds();
+      if (!obBounds.length || !runnerBounds.length || !ob2Bounds.length) computeBounds();
       if (runnerBounds.length && !anchorsReady) updateAnchors();
 
+      /* 重力（含开场下落） */
       const g = (holding && player.vy < 0 && holdFrames < MAX_HOLD) ? HOLD_GRAVITY : GRAVITY;
       if (holding) holdFrames += dt;
       if (holdFrames >= MAX_HOLD) holding = false;
@@ -298,33 +322,45 @@
         player.grounded = true;
         holding = false;
         holdFrames = 0;
+        introFall = false;
       }
 
-      spawnTimer -= dt;
-      if (spawnTimer <= 0) {
-        const h = 56 + Math.random() * 48;
-        const fi = Math.floor(Math.random() * (OB_COLS * OB_ROWS));
-        const b = obBounds[fi] || { vx: 4, vy: 5, vw: obFW - 8, vh: obFH - 10 };
-        obstacles.push({
-          x: canvas.width + 20 + Math.random() * 60,
-          h,
-          w: h * (obFW / obFH),
-          fi,
-          anchorY: GROUND - ((b.vy + b.vh) / obFH) * h
-        });
-        window.__gameDebug.lastObstacleH = Math.round(h);
-        spawnTimer = 80 + Math.random() * 140;
+      /* 音乐计时（每次播放重新计时） */
+      const musicTime = started && isFinite(bgm.currentTime) ? bgm.currentTime : 0;
+      animatedObstacle = musicTime >= OB2_SWITCH_TIME;
+      speed = Math.min(13, 3.0 + musicTime * 0.05);
+      scoreEl.textContent = fmtTime(musicTime) + " / " + (isFinite(bgm.duration) ? fmtTime(bgm.duration) : "--:--");
+
+      if (!introFall) {
+        spawnTimer -= dt;
+        if (spawnTimer <= 0) {
+          const useAni = animatedObstacle;
+          const h = 56 + Math.random() * 48;
+          const fw = useAni ? ob2FW : obFW;
+          const fh = useAni ? ob2FH : obFH;
+          const bArr = useAni ? ob2Bounds : obBounds;
+          const b = bArr[0] || { vx: 4, vy: 5, vw: fw - 8, vh: fh - 10 };
+          obstacles.push({
+            x: canvas.width + 20 + Math.random() * 60,
+            h,
+            w: h * (fw / fh),
+            sheet: useAni ? 1 : 0,
+            fi: useAni ? 0 : Math.floor(Math.random() * (OB_COLS * OB_ROWS)),
+            anchorY: GROUND - ((b.vy + b.vh) / fh) * h
+          });
+          window.__gameDebug.lastObstacleH = Math.round(h);
+          spawnTimer = 80 + Math.random() * 140;
+        }
       }
       obstacles.forEach(o => { o.x -= speed * dt; });
       obstacles = obstacles.filter(o => o.x + o.w > -40);
-      score += 0.1 * dt;
-      speed = Math.min(13, 3.0 + score / 80);
 
       if (player.grounded) {
         const animSpeed = Math.max(3, Math.round(12 - speed * 0.6));
         runFrame = Math.floor(frame / animSpeed) % (RUNNER_COLS * RUNNER_ROWS);
       }
 
+      /* 角色碰撞箱（按贴图可见像素） */
       const rb = runnerBounds[runFrame] || { vx: runnerFW * 0.15, vy: runnerFH * 0.15, vw: runnerFW * 0.7, vh: runnerFH * 0.7 };
       const sxP = playerW / runnerFW;
       const syP = playerH / runnerFH;
@@ -335,9 +371,13 @@
         h: Math.max(2, rb.vh * syP - 2)
       };
       for (const o of obstacles) {
-        const b = obBounds[o.fi] || { vx: 4, vy: 5, vw: obFW - 8, vh: obFH - 10 };
-        const sx = o.w / obFW;
-        const sy = o.h / obFH;
+        const fw = o.sheet === 1 ? ob2FW : obFW;
+        const fh = o.sheet === 1 ? ob2FH : obFH;
+        const obFi = o.sheet === 1 ? (Math.floor(frame / 6) % (OB2_COLS * OB2_ROWS)) : o.fi;
+        const bArr = o.sheet === 1 ? ob2Bounds : obBounds;
+        const b = bArr[obFi] || { vx: 4, vy: 5, vw: fw - 8, vh: fh - 10 };
+        const sx = o.w / fw;
+        const sy = o.h / fh;
         const or = {
           x: o.x + b.vx * sx + 1,
           y: o.anchorY + b.vy * sy + 1,
@@ -346,21 +386,18 @@
         };
         if (pr.x < or.x + or.w && pr.x + pr.w > or.x && pr.y < or.y + or.h && pr.y + pr.h > or.y) {
           over = true;
-          bgm.pause(); /* 失败后音乐暂停 */
-          window.__gameDebug.musicPaused = true;
-          window.__gameDebug.over = true;
-          const s = Math.floor(score);
-          if (s > best) {
-            best = s;
-            bestEl.textContent = String(best);
-            try { localStorage.setItem("wuju59-game-best", String(best)); } catch (e) { /* 忽略 */ }
+          bgm.pause();
+          if (musicTime > bestTime) {
+            bestTime = musicTime;
+            bestEl.textContent = fmtTime(bestTime);
+            try { localStorage.setItem("wuju59-game-best", String(bestTime)); } catch (e) { /* 忽略 */ }
           }
           startBtn.textContent = "重新开始";
+          window.__gameDebug.musicPaused = true;
+          window.__gameDebug.over = true;
           return;
         }
       }
-
-      scoreEl.textContent = String(Math.floor(score));
 
       window.__gameDebug.grounded = player.grounded;
       window.__gameDebug.runFrame = runFrame;
@@ -368,14 +405,13 @@
       window.__gameDebug.holding = holding;
       window.__gameDebug.frame = +frame.toFixed(1);
       window.__gameDebug.speed = +speed.toFixed(2);
+      window.__gameDebug.musicTime = +musicTime.toFixed(2);
+      window.__gameDebug.animatedObstacle = animatedObstacle;
+      window.__gameDebug.introFall = introFall;
       window.__gameDebug.groundAnchorY = Math.round(groundAnchorY);
       window.__gameDebug.playerVisibleBottom = Math.round(player.y + (rb.vy + rb.vh) * syP);
       window.__gameDebug.obBounds = obBounds.length ? obBounds[0] : null;
-      if (obstacles.length) {
-        const o = obstacles[0];
-        const b = obBounds[o.fi] || { vx: 4, vy: 5, vw: obFW - 8, vh: obFH - 10 };
-        window.__gameDebug.obVisibleBottom = Math.round(o.anchorY + (b.vy + b.vh) * (o.h / obFH));
-      }
+      window.__gameDebug.ob2Bounds = ob2Bounds.length ? ob2Bounds[0] : null;
     }
 
     function draw() {
@@ -387,14 +423,19 @@
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
         ctx.fill();
       }
-      /* 地面：线以下填充深色，作为按钮区域 */
       ctx.fillStyle = "#111";
       ctx.fillRect(0, GROUND, canvas.width, canvas.height - GROUND);
       ctx.fillStyle = "#666";
       ctx.fillRect(0, GROUND, canvas.width, 2);
 
-      if (obstacleImg.naturalWidth) {
-        for (const o of obstacles) {
+      /* 障碍：普通随机帧 / 音乐 2:22.22 后的 I_01 动画帧 */
+      for (const o of obstacles) {
+        if (o.sheet === 1) {
+          const obFi = Math.floor(frame / 6) % (OB2_COLS * OB2_ROWS);
+          const row = Math.floor(obFi / OB2_COLS);
+          const col = obFi % OB2_COLS;
+          ctx.drawImage(obstacleAnimImg, col * ob2FW, row * ob2FH, ob2FW, ob2FH, o.x, o.anchorY, o.w, o.h);
+        } else {
           const obRow = Math.floor(o.fi / OB_COLS);
           const obCol = o.fi % OB_COLS;
           ctx.drawImage(obstacleImg, obCol * obFW, obRow * obFH, obFW, obFH, o.x, o.anchorY, o.w, o.h);
