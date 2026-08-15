@@ -5,8 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>恐龙巴快跑</title>
   <style>
+    @font-face {
+      font-family: "MisakiMincho";
+      src: url("assets/misaki-mincho.ttf") format("truetype");
+    }
     /* 纯黑极简页面 */
-    body { margin: 0; background: #000; }
+    body { margin: 0; background: #000; font-family: "MisakiMincho", Arial, "Microsoft YaHei", sans-serif; }
 
     /* 5px 白色正方形方框，页面正中间 */
     #game-box {
@@ -60,19 +64,19 @@
     }
     #game-start {
       padding: 8px 20px;
-      background: #fff;
-      color: #000;
-      border: none;
-      border-radius: 6px;
+      background: #000;
+      color: #fff;
+      border: 3px solid #fff;
+      border-radius: 0;
       cursor: pointer;
       font: inherit;
       font-weight: bold;
     }
     #mute-btn {
-      background: #fff;
-      color: #000;
-      border: none;
-      border-radius: 6px;
+      background: #000;
+      color: #fff;
+      border: 3px solid #fff;
+      border-radius: 0;
       cursor: pointer;
       font-size: 15px;
       padding: 6px 10px;
@@ -244,11 +248,12 @@
       bgm.play().catch(() => { /* 浏览器拦截时忽略 */ });
       window.__gameDebug.musicAttempted = (window.__gameDebug.musicAttempted || 0) + 1;
       window.__gameDebug.started = true;
+      window.__gameDebug.over = false;
     }
 
     function jump() {
-      if (!started) { startGame(); return; }
-      if (over) { reset(); return; }
+      /* 失败后只能点「重新开始」按钮，空格/点击画面不重启 */
+      if (!started || over) return;
       if (player.grounded) {
         player.vy = JUMP_VY;
         player.grounded = false;
@@ -327,6 +332,9 @@
         };
         if (pr.x < or.x + or.w && pr.x + pr.w > or.x && pr.y < or.y + or.h && pr.y + pr.h > or.y) {
           over = true;
+          bgm.pause(); /* 失败后音乐暂停 */
+          window.__gameDebug.musicPaused = true;
+          window.__gameDebug.over = true;
           const s = Math.floor(score);
           if (s > best) {
             best = s;
