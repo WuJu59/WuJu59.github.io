@@ -77,24 +77,12 @@
       font-size: 15px;
       padding: 6px 10px;
     }
-    #game-state {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 11%;
-      text-align: center;
-      font-size: 12px;
-      color: #aaa;
-      z-index: 2;
-      pointer-events: none;
-    }
   </style>
 </head>
 <body>
   <div id="game-box">
     <canvas id="game-canvas" width="480" height="480" aria-label="跳跃障碍小游戏"></canvas>
     <div id="score-row">分数：<b id="game-score">0</b> &nbsp;·&nbsp; 最高分：<b id="game-best">0</b></div>
-    <p id="game-state">空格 / 点击跳跃 · 按住跳更高</p>
     <div id="controls">
       <button type="button" id="game-start">开始游戏</button>
       <button type="button" id="mute-btn" title="背景音乐开关">🔊</button>
@@ -109,22 +97,19 @@
     const ctx = canvas.getContext("2d");
     const scoreEl = document.getElementById("game-score");
     const bestEl = document.getElementById("game-best");
-    const stateEl = document.getElementById("game-state");
     const startBtn = document.getElementById("game-start");
     const muteBtn = document.getElementById("mute-btn");
 
     const bgm = new Audio("assets/background-music.wav");
     bgm.loop = true;
     bgm.preload = "none";
-    let musicStarted = false;
-
     canvas.width = 480;
     canvas.height = 480;
     const GROUND = 400; /* 地面线：方框上方约 5/6 处，下方留给按钮 */
 
     const RUNNER_COLS = 8, RUNNER_ROWS = 4;
     const OB_COLS = 4, OB_ROWS = 2;
-    const SCALE = 2.0;
+    const SCALE = 1.6;
     const JUMP_VY = -9.5;
     const GRAVITY = 0.55;
     const HOLD_GRAVITY = 0.26;
@@ -195,8 +180,10 @@
 
     function updateAnchors() {
       if (!runnerBounds.length) return;
-      const rb = runnerBounds[runFrame] || runnerBounds[0];
-      groundAnchorY = GROUND - ((rb.vy + rb.vh) / runnerFH) * playerH;
+      /* 单一贴地基准：只让最低的那几帧贴地，保留跳跃姿态动画 */
+      let maxBottom = 0;
+      for (const b of runnerBounds) maxBottom = Math.max(maxBottom, b.vy + b.vh);
+      groundAnchorY = GROUND - (maxBottom / runnerFH) * playerH;
       anchorsReady = true;
     }
 
@@ -245,7 +232,6 @@
       runFrame = 0;
       holding = false;
       holdFrames = 0;
-      stateEl.textContent = "空格 / 点击跳跃 · 按住跳更高";
       scoreEl.textContent = "0";
     }
 
@@ -253,11 +239,10 @@
       reset();
       started = true;
       startBtn.textContent = "重新开始";
-      if (!musicStarted) {
-        musicStarted = true;
-        bgm.play().catch(() => { /* 浏览器拦截时忽略 */ });
-      }
-      window.__gameDebug.musicAttempted = true;
+      /* 每次开始/重开都从开头重新播放音乐 */
+      bgm.currentTime = 0;
+      bgm.play().catch(() => { /* 浏览器拦截时忽略 */ });
+      window.__gameDebug.musicAttempted = (window.__gameDebug.musicAttempted || 0) + 1;
       window.__gameDebug.started = true;
     }
 
@@ -298,7 +283,7 @@
 
       spawnTimer -= dt;
       if (spawnTimer <= 0) {
-        const h = 70 + Math.random() * 60;
+        const h = 56 + Math.random() * 48;
         const fi = Math.floor(Math.random() * (OB_COLS * OB_ROWS));
         const b = obBounds[fi] || { vx: 4, vy: 5, vw: obFW - 8, vh: obFH - 10 };
         obstacles.push({
@@ -319,8 +304,6 @@
       if (player.grounded) {
         const animSpeed = Math.max(3, Math.round(12 - speed * 0.6));
         runFrame = Math.floor(frame / animSpeed) % (RUNNER_COLS * RUNNER_ROWS);
-        const rb = runnerBounds[runFrame];
-        if (rb) groundAnchorY = GROUND - ((rb.vy + rb.vh) / runnerFH) * playerH;
       }
 
       const rb = runnerBounds[runFrame] || { vx: runnerFW * 0.15, vy: runnerFH * 0.15, vw: runnerFW * 0.7, vh: runnerFH * 0.7 };
@@ -350,7 +333,6 @@
             bestEl.textContent = String(best);
             try { localStorage.setItem("wuju59-game-best", String(best)); } catch (e) { /* 忽略 */ }
           }
-          stateEl.textContent = "撞到啦！点击重新开始";
           startBtn.textContent = "重新开始";
           return;
         }
