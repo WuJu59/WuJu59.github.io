@@ -566,6 +566,15 @@
         ctx.fillText("恭喜通過", canvas.width / 2, 140);
         window.__gameDebug.victoryFrame = Math.floor(victoryFrame / 8);
       }
+
+      /* 失败：撞到障碍物，中间显示「追付かれた」 */
+      if (over && !victory) {
+        ctx.fillStyle = "#fff";
+        ctx.font = "28px MisakiMincho, serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("追付かれた", canvas.width / 2, 140);
+      }
     }
 
     function loop(now) {
