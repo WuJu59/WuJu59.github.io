@@ -503,12 +503,8 @@
       ctx.fillStyle = "#666";
       ctx.fillRect(0, GROUND, canvas.width, 2);
 
-      /* 障碍 + 角色：地面线以下一律裁剪，杜绝穿地 */
+      /* 障碍：普通随机帧 / 音乐 2:22.22 后的 l_01 动画（每行一种，按列播放） */
       if (!victory) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(0, 0, canvas.width, GROUND);
-        ctx.clip();
         for (const o of obstacles) {
           const info = obInfo(o);
           if (o.sheet === 1) {
@@ -521,12 +517,14 @@
             ctx.drawImage(obstacleImg, obCol * obFW, obRow * obFH, obFW, obFH, o.x, info.anchorY, o.w, o.h);
           }
         }
-        if (runnerImg.naturalWidth) {
+      }
+
+      if (runnerImg.naturalWidth) {
+        if (!victory) {
           const row = Math.floor(runFrame / RUNNER_COLS);
           const col = runFrame % RUNNER_COLS;
           ctx.drawImage(runnerImg, col * runnerFW, row * runnerFH, runnerFW, runnerFH, player.x, player.y, playerW, playerH);
         }
-        ctx.restore();
       }
 
       /* 胜利动画：h_04，居中播放 */
