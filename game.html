@@ -252,7 +252,8 @@
       if (!runnerBounds.length) return;
       let maxBottom = 0;
       for (const b of runnerBounds) maxBottom = Math.max(maxBottom, b.vy + b.vh);
-      groundAnchorY = GROUND - (maxBottom / runnerFH) * playerH;
+      /* 人物稍微上移 6px，避免视觉上穿地 */
+      groundAnchorY = GROUND - (maxBottom / runnerFH) * playerH - 6;
       anchorsReady = true;
     }
 
@@ -527,15 +528,18 @@
         }
       }
 
-      /* 胜利动画：h_04，居中播放 */
+      /* 胜利动画：h_04，与人物同位置同大小播放 */
       if (victory && victoryImg.naturalWidth) {
         const idx = Math.floor(victoryFrame / 8) % (VIC_COLS * VIC_ROWS);
         const row = Math.floor(idx / VIC_COLS);
         const col = idx % VIC_COLS;
-        const scale = 2.2;
-        const dw = vicFW * scale, dh = vicFH * scale;
-        ctx.drawImage(victoryImg, col * vicFW, row * vicFH, vicFW, vicFH,
-          (canvas.width - dw) / 2, (canvas.height - dh) / 2, dw, dh);
+        ctx.drawImage(victoryImg, col * vicFW, row * vicFH, vicFW, vicFH, player.x, player.y, playerW, playerH);
+        /* 中间显示通关文字 */
+        ctx.fillStyle = "#fff";
+        ctx.font = "28px MisakiMincho, serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("恭喜通关！", canvas.width / 2, 140);
         window.__gameDebug.victoryFrame = Math.floor(victoryFrame / 8);
       }
     }
